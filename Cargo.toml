@@ -6,7 +6,7 @@ description = "A Rust crate for creating rectangle border design of Greek Key (M
 license = "MIT"
 repository = "https://github.com/bingqiao/meander"
 keywords = ["greek-key", "meander", "svg", "rectangle"]
-categories = ["svg"]
+categories = ["multimedia::images"]
 
 [dependencies]
 clap = { version = "4.5.46", features = ["derive"] }
