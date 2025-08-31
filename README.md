@@ -1,6 +1,6 @@
 # Meander
 
-[![Crates.io](https://img.shields.io/crates/v/mandarin-to-pinyin.svg)](https://crates.io/crates/greek-meander)
+[![Crates.io](https://img.shields.io/crates/v/greek-meander.svg)](https://crates.io/crates/greek-meander)
 [![Docs.rs](https://docs.rs/greek-meander/badge.svg)](https://docs.rs/greek-meander)
 
 Create a frame of Greek Key (Meander) design in PNG and SVG.
