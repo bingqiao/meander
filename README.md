@@ -5,7 +5,13 @@
 
 Create a frame of Greek Key (Meander) design in PNG and SVG.
 
-![Meander](meander.png)
+![Meander](https://raw.githubusercontent.com/bingqiao/meander/refs/heads/master/meander.png)
+
+## Install
+
+```bash
+cargo install greek-meander
+```
 
 ## Build and Run
 
