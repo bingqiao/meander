@@ -64,7 +64,7 @@ jobs:
             SOURCE_PATH="target/${{ matrix.target }}/release/${PACKAGE_NAME}${EXT}"
             ARTIFACT_PATH="${ARTIFACT_DIR}/${PACKAGE_NAME}-${{ matrix.target }}${EXT}"
             mv "${SOURCE_PATH}" "${ARTIFACT_PATH}"
-            certutil -hashfile "${ARTIFACT_PATH}" SHA256 | findstr /v "certutil" > "${ARTIFACT_PATH}.sha256"
+            certutil -hashfile "${ARTIFACT_PATH}" SHA256 | grep -v "CertUtil" | grep -v "hash of file" > "${ARTIFACT_PATH}.sha256"
           else
             EXT=""
             SOURCE_PATH="target/${{ matrix.target }}/release/${PACKAGE_NAME}${EXT}"
