@@ -5,7 +5,7 @@ use svg::Document;
 use svg::node::element::Path as SvgPath;
 use svg::node::element::path::Data;
 
-use crate::config::GreekKeyConfig;
+use crate::config::GreekKeyRectConfig;
 
 fn draw_horizontal_unit(data: Data, key_unit_length: i32) -> Data {
     data.line_by((0, -4 * key_unit_length))
@@ -60,8 +60,8 @@ fn draw_vertical_unit_bottom_up(data: Data, key_unit_length: i32) -> Data {
 }
 
 fn draw_frame(
-    x: i32,
-    y: i32,
+    x: f64,
+    y: f64,
     w: i32,
     h: i32,
     stroke_color: &str,
@@ -82,7 +82,7 @@ fn draw_frame(
         .set("d", data)
 }
 
-fn draw_greek_key_unit(config: &GreekKeyConfig) -> Data {
+fn draw_greek_key_patterns(config: &GreekKeyRectConfig) -> Data {
     let (start_x, start_y) = config.get_start_position();
     let key_unit_length = config.key_unit_length;
     let width_units = config.width_units;
@@ -119,7 +119,7 @@ fn draw_greek_key_unit(config: &GreekKeyConfig) -> Data {
 }
 
 pub fn generate_pattern_svg(
-    config: &GreekKeyConfig,
+    config: &GreekKeyRectConfig,
     stroke_width: f32,
     stroke_color: &str,
     stroke_opacity: f32,
@@ -128,7 +128,7 @@ pub fn generate_pattern_svg(
     let (width, height) = config.get_canvas_size();
     let mut document = Document::new().set("viewBox", (0, 0, width, height));
 
-    let path_data = draw_greek_key_unit(config);
+    let path_data = draw_greek_key_patterns(config);
     let path = SvgPath::new()
         .set("fill", "none")
         .set("stroke", stroke_color.to_string())

@@ -1,24 +1,51 @@
 use clap::Parser;
 
 mod args;
-use args::Args;
+use args::{Args, Commands};
 
 mod config;
-use config::GreekKeyConfig;
+use config::{GreekKeyCircleConfig, GreekKeyRectConfig};
 
-mod drawing;
-use drawing::generate_pattern_svg;
+mod rect;
+
+mod circle;
 
 fn main() {
     let args = Args::parse();
 
-    let config = GreekKeyConfig::new(args.size, args.width, args.height);
+    match args.command {
+        Commands::Rect(rect_args) => {
+            let config: GreekKeyRectConfig = GreekKeyRectConfig::new(
+                rect_args.size,
+                rect_args.width,
+                rect_args.height,
+                args.border_margin,
+                args.stroke_width,
+            );
 
-    generate_pattern_svg(
-        &config,
-        args.stroke_width,
-        &args.stroke_color,
-        args.stroke_opacity,
-        &args.file,
-    );
+            rect::generate_pattern_svg(
+                &config,
+                args.stroke_width,
+                &args.stroke_color,
+                args.stroke_opacity,
+                &args.file,
+            );
+        }
+        Commands::Circle(circle_args) => {
+            let config: GreekKeyCircleConfig = GreekKeyCircleConfig::new(
+                circle_args.radius,
+                circle_args.pattern_count,
+                args.border_margin,
+                args.stroke_width,
+            );
+
+            circle::generate_pattern_svg(
+                &config,
+                args.stroke_width,
+                &args.stroke_color,
+                args.stroke_opacity,
+                &args.file,
+            );
+        }
+    }
 }
