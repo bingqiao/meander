@@ -46,11 +46,16 @@ jobs:
             cargo build --release --target ${{ matrix.target }}
           fi
 
+      - name: Get package name
+        shell: bash
+        run: | 
+          echo "PACKAGE_NAME=$(grep '^name =' Cargo.toml | head -n 1 | sed 's/name = \"(.*)\"/
+1/g')" >> $GITHUB_ENV
+
       - name: Prepare artifacts
         id: prepare
         shell: bash
-        run: |
-          PACKAGE_NAME=meander
+        run: | 
           ARTIFACT_DIR="dist"
           mkdir -p ${ARTIFACT_DIR}
 
