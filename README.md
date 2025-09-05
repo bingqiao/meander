@@ -12,11 +12,11 @@ Here are some examples of the images that can be generated:
 
 **Rectangle**
 
-<img src="https://raw.githubusercontent.com/bingqiao/meander/main/images/meander_rect.png" width="250">
+<img src="https://raw.githubusercontent.com/bingqiao/meander/refs/heads/master/images/meander_rect.png" width="250">
 
 **Circle**
 
-<img src="https://raw.githubusercontent.com/bingqiao/meander/main/images/meander_circle.png" width="250">
+<img src="https://raw.githubusercontent.com/bingqiao/meander/refs/heads/master/images/meander_circle.png" width="250">
 
 ## Install
 
