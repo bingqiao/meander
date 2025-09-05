@@ -48,9 +48,9 @@ jobs:
 
       - name: Get package name
         shell: bash
-        run: | 
-          echo "PACKAGE_NAME=$(grep '^name =' Cargo.toml | head -n 1 | sed 's/name = \"(.*)\"/
-1/g')" >> $GITHUB_ENV
+        run: |
+          PACKAGE_NAME=$(grep '^name =' Cargo.toml | head -n 1 | sed 's/name = "//; s/"//')
+          echo "PACKAGE_NAME=${PACKAGE_NAME}" >> $GITHUB_ENV
 
       - name: Prepare artifacts
         id: prepare
