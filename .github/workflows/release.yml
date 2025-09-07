@@ -70,6 +70,7 @@ jobs:
             SOURCE_PATH="target/${{ matrix.target }}/release/${PACKAGE_NAME}${EXT}"
             ARTIFACT_PATH="${ARTIFACT_DIR}/${PACKAGE_NAME}-${{ matrix.target }}${EXT}"
             mv "${SOURCE_PATH}" "${ARTIFACT_PATH}"
+            chmod +x "${ARTIFACT_PATH}"
             sha256sum "${ARTIFACT_PATH}" > "${ARTIFACT_PATH}.sha256"
           fi
           
