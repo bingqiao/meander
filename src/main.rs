@@ -10,10 +10,12 @@ mod rect;
 
 mod circle;
 
+mod common;
+
 fn main() {
     let args = Args::parse();
 
-    match args.command {
+    let result = match args.command {
         Commands::Rect(rect_args) => {
             let config: GreekKeyRectConfig = GreekKeyRectConfig::new(
                 rect_args.size,
@@ -29,7 +31,7 @@ fn main() {
                 &args.stroke_color,
                 args.stroke_opacity,
                 &args.file,
-            );
+            )
         }
         Commands::Circle(circle_args) => {
             let config: GreekKeyCircleConfig = GreekKeyCircleConfig::new(
@@ -45,7 +47,12 @@ fn main() {
                 &args.stroke_color,
                 args.stroke_opacity,
                 &args.file,
-            );
+            )
         }
+    };
+
+    if let Err(e) = result {
+        eprintln!("Error: {}", e);
+        std::process::exit(1);
     }
 }

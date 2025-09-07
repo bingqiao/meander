@@ -147,12 +147,7 @@ pub fn calculate_circle_points(centre: Point, n: i32, p1: Point, r: f64) -> [Poi
     points
 }
 
-// Struct to represent a 2D point
-#[derive(Debug, Clone, Copy)]
-pub struct Point {
-    pub x: f64,
-    pub y: f64,
-}
+use crate::common::Point;
 
 impl GreekKeyCircleConfig {
     pub fn new(r_o: f64, pattern_count: i32, border_margin: i32, stroke_width: f32) -> Self {
