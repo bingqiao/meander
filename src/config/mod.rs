@@ -57,7 +57,7 @@ impl GreekKeyRectConfig {
     pub fn get_inner_frame_size(&self) -> (f64, f64, i32, i32) {
         let inner_x =
             (6 * self.key_unit_length + self.border_margin) as f64 + self.stroke_width as f64;
-        let inner_y = (6 * self.key_unit_length) as f64 + self.stroke_width as f64;
+        let inner_y = (6 * self.key_unit_length + self.border_margin) as f64 + self.stroke_width as f64;
         let inner_width = (self.width_units - 2) * self.key_pattern_length;
         let inner_height = (self.height_units - 2) * self.key_pattern_length;
         (inner_x, inner_y, inner_width, inner_height)
