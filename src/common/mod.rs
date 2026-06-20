@@ -8,7 +8,7 @@ pub struct Point {
     pub y: f64,
 }
 
-pub fn save_and_convert_svg(
+pub(crate) fn save_and_convert_svg(
     document: Document,
     filename: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {

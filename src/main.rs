@@ -3,35 +3,31 @@ use clap::Parser;
 mod args;
 use args::{Args, Commands};
 
-mod config;
-use config::{GreekKeyCircleConfig, GreekKeyRectConfig};
-
-mod rect;
-
-mod circle;
-
-mod common;
+use greek_meander::{
+    circle, rect,
+    config::{GreekKeyCircleConfig, GreekKeyRectConfig},
+};
 
 fn main() {
     let args = Args::parse();
 
     let result = match args.command {
         Commands::Rect(rect_args) => {
-            let config: GreekKeyRectConfig = GreekKeyRectConfig::new(
+            GreekKeyRectConfig::new(
                 rect_args.size,
                 rect_args.width,
                 rect_args.height,
                 args.border_margin,
                 args.stroke_width,
-            );
-
-            rect::generate_pattern_svg(
-                &config,
-                args.stroke_width,
-                &args.stroke_color,
-                args.stroke_opacity,
-                &args.file,
             )
+            .and_then(|config| {
+                rect::generate_pattern_svg(
+                    &config,
+                    &args.stroke_color,
+                    args.stroke_opacity,
+                    &args.file,
+                )
+            })
         }
         Commands::Circle(circle_args) => {
             GreekKeyCircleConfig::new(
@@ -40,11 +36,9 @@ fn main() {
                 args.border_margin,
                 args.stroke_width,
             )
-            .map_err(|e| -> Box<dyn std::error::Error> { e.into() })
             .and_then(|config| {
                 circle::generate_pattern_svg(
                     &config,
-                    args.stroke_width,
                     &args.stroke_color,
                     args.stroke_opacity,
                     &args.file,
