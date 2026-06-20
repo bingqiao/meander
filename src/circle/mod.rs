@@ -2,6 +2,7 @@ use svg::Document;
 use svg::node::element::path::Data;
 use svg::node::element::{Circle, Path as SvgPath};
 
+#[cfg(feature = "native")]
 use crate::common::save_and_convert_svg;
 use crate::config::GreekKeyCircleConfig;
 
@@ -54,13 +55,7 @@ fn draw_frame(
         .set("stroke-opacity", stroke_opacity)
 }
 
-/// Generates a circle Greek Key pattern and writes `<filename>.svg` and `<filename>.png`.
-pub fn generate_pattern_svg(
-    config: &GreekKeyCircleConfig,
-    stroke_color: &str,
-    stroke_opacity: f32,
-    filename: &str,
-) -> Result<(), Box<dyn std::error::Error>> {
+fn build_document(config: &GreekKeyCircleConfig, stroke_color: &str, stroke_opacity: f32) -> Document {
     let stroke_width = config.stroke_width;
     let (width, height) = config.get_canvas_size();
     let mut document = Document::new().set("viewBox", (0, 0, width, height));
@@ -76,23 +71,43 @@ pub fn generate_pattern_svg(
     document = document.add(path);
 
     let centre = config.get_centre();
-
     document = document.add(draw_frame(
-        centre.x,
-        centre.y,
-        config.radii.r_i,
-        stroke_color,
-        stroke_width,
-        stroke_opacity,
+        centre.x, centre.y, config.radii.r_i,
+        stroke_color, stroke_width, stroke_opacity,
     ));
     document = document.add(draw_frame(
-        centre.x,
-        centre.y,
-        config.radii.r_o,
-        stroke_color,
-        stroke_width,
-        stroke_opacity,
+        centre.x, centre.y, config.radii.r_o,
+        stroke_color, stroke_width, stroke_opacity,
     ));
 
-    save_and_convert_svg(document, filename)
+    document
+}
+
+/// Returns the circle Greek Key pattern as an SVG string.
+///
+/// Available on all targets including WASM. For file output, use
+/// [`generate_pattern_svg`] (requires the `native` feature).
+pub fn generate_svg_string(
+    config: &GreekKeyCircleConfig,
+    stroke_color: &str,
+    stroke_opacity: f32,
+) -> Result<String, Box<dyn std::error::Error>> {
+    let document = build_document(config, stroke_color, stroke_opacity);
+    let mut content = Vec::new();
+    svg::write(&mut content, &document)?;
+    Ok(String::from_utf8(content)?)
+}
+
+/// Generates a circle Greek Key pattern and writes `<filename>.svg` and `<filename>.png`.
+///
+/// Requires the `native` feature (enabled by default). For WASM targets, use
+/// [`generate_svg_string`] instead.
+#[cfg(feature = "native")]
+pub fn generate_pattern_svg(
+    config: &GreekKeyCircleConfig,
+    stroke_color: &str,
+    stroke_opacity: f32,
+    filename: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
+    save_and_convert_svg(build_document(config, stroke_color, stroke_opacity), filename)
 }

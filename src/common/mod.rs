@@ -1,5 +1,8 @@
+#[cfg(feature = "native")]
 use resvg::render;
+#[cfg(feature = "native")]
 use resvg::usvg::Tree;
+#[cfg(feature = "native")]
 use svg::Document;
 
 #[derive(Debug, Clone, Copy)]
@@ -8,6 +11,7 @@ pub struct Point {
     pub y: f64,
 }
 
+#[cfg(feature = "native")]
 pub(crate) fn save_and_convert_svg(
     document: Document,
     filename: &str,

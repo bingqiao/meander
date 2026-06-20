@@ -2,6 +2,7 @@ use svg::Document;
 use svg::node::element::Path as SvgPath;
 use svg::node::element::path::Data;
 
+#[cfg(feature = "native")]
 use crate::common::save_and_convert_svg;
 use crate::config::GreekKeyRectConfig;
 
@@ -116,13 +117,7 @@ fn draw_greek_key_patterns(config: &GreekKeyRectConfig) -> Data {
     data.close()
 }
 
-/// Generates a rectangle Greek Key pattern and writes `<filename>.svg` and `<filename>.png`.
-pub fn generate_pattern_svg(
-    config: &GreekKeyRectConfig,
-    stroke_color: &str,
-    stroke_opacity: f32,
-    filename: &str,
-) -> Result<(), Box<dyn std::error::Error>> {
+fn build_document(config: &GreekKeyRectConfig, stroke_color: &str, stroke_opacity: f32) -> Document {
     let stroke_width = config.stroke_width;
     let (width, height) = config.get_canvas_size();
     let mut document = Document::new().set("viewBox", (0, 0, width, height));
@@ -138,28 +133,45 @@ pub fn generate_pattern_svg(
     document = document.add(path);
 
     let (outer_x, outer_y, outer_width, outer_height) = config.get_outer_frame_size();
-    let outer_frame = draw_frame(
-        outer_x,
-        outer_y,
-        outer_width,
-        outer_height,
-        stroke_color,
-        stroke_width,
-        stroke_opacity,
-    );
-    document = document.add(outer_frame);
+    document = document.add(draw_frame(
+        outer_x, outer_y, outer_width, outer_height,
+        stroke_color, stroke_width, stroke_opacity,
+    ));
 
     let (inner_x, inner_y, inner_width, inner_height) = config.get_inner_frame_size();
-    let inner_frame = draw_frame(
-        inner_x,
-        inner_y,
-        inner_width,
-        inner_height,
-        stroke_color,
-        stroke_width,
-        stroke_opacity,
-    );
-    document = document.add(inner_frame);
+    document = document.add(draw_frame(
+        inner_x, inner_y, inner_width, inner_height,
+        stroke_color, stroke_width, stroke_opacity,
+    ));
 
-    save_and_convert_svg(document, filename)
+    document
+}
+
+/// Returns the rectangle Greek Key pattern as an SVG string.
+///
+/// Available on all targets including WASM. For file output, use
+/// [`generate_pattern_svg`] (requires the `native` feature).
+pub fn generate_svg_string(
+    config: &GreekKeyRectConfig,
+    stroke_color: &str,
+    stroke_opacity: f32,
+) -> Result<String, Box<dyn std::error::Error>> {
+    let document = build_document(config, stroke_color, stroke_opacity);
+    let mut content = Vec::new();
+    svg::write(&mut content, &document)?;
+    Ok(String::from_utf8(content)?)
+}
+
+/// Generates a rectangle Greek Key pattern and writes `<filename>.svg` and `<filename>.png`.
+///
+/// Requires the `native` feature (enabled by default). For WASM targets, use
+/// [`generate_svg_string`] instead.
+#[cfg(feature = "native")]
+pub fn generate_pattern_svg(
+    config: &GreekKeyRectConfig,
+    stroke_color: &str,
+    stroke_opacity: f32,
+    filename: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
+    save_and_convert_svg(build_document(config, stroke_color, stroke_opacity), filename)
 }

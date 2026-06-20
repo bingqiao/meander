@@ -101,6 +101,24 @@ fn circle_png_has_valid_magic_bytes() {
     );
 }
 
+// --- generate_svg_string (WASM-safe path) ---
+
+#[test]
+fn rect_svg_string_is_valid_svg() {
+    let config = GreekKeyRectConfig::new(10, 4, 4, 5, 2.0).unwrap();
+    let svg = rect::generate_svg_string(&config, "#AB8E0E", 0.7).unwrap();
+    assert!(svg.contains("<svg"), "svg string should contain an <svg> element");
+    assert!(svg.contains("viewBox"), "svg string should contain a viewBox attribute");
+}
+
+#[test]
+fn circle_svg_string_is_valid_svg() {
+    let config = GreekKeyCircleConfig::new(100.0, 10, 5, 2.0).unwrap();
+    let svg = circle::generate_svg_string(&config, "#AB8E0E", 0.7).unwrap();
+    assert!(svg.contains("<svg"), "svg string should contain an <svg> element");
+    assert!(svg.contains("viewBox"), "svg string should contain a viewBox attribute");
+}
+
 // --- public type surface ---
 
 #[test]
