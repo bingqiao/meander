@@ -1,5 +1,7 @@
 use std::f64::consts::PI;
 
+use crate::common::Point;
+
 pub struct GreekKeyRectConfig {
     pub key_unit_length: i32,
     pub width_units: i32,
@@ -22,8 +24,8 @@ impl GreekKeyRectConfig {
             width_units,
             height_units,
             key_pattern_length: key_unit_length * 5,
-            border_margin: border_margin,
-            stroke_width: stroke_width,
+            border_margin,
+            stroke_width,
         }
     }
 
@@ -147,18 +149,17 @@ pub fn calculate_circle_points(centre: Point, n: i32, p1: Point, r: f64) -> [Poi
     points
 }
 
-use crate::common::Point;
-
 impl GreekKeyCircleConfig {
-    pub fn new(r_o: f64, pattern_count: i32, border_margin: i32, stroke_width: f32) -> Self {
-        let radii = get_radii_for_outer_radius(r_o, PATTERN_UNIT_SIZE * pattern_count).unwrap();
-        Self {
+    pub fn new(r_o: f64, pattern_count: i32, border_margin: i32, stroke_width: f32) -> Result<Self, String> {
+        let radii = get_radii_for_outer_radius(r_o, PATTERN_UNIT_SIZE * pattern_count)
+            .map_err(|e| e.to_string())?;
+        Ok(Self {
             r_o,
             pattern_count,
             border_margin,
             radii,
-            stroke_width: stroke_width,
-        }
+            stroke_width,
+        })
     }
 
     pub fn get_canvas_size(&self) -> (f64, f64) {
