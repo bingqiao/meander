@@ -1,43 +1,71 @@
 # Roadmap
 
-## Library API
+## Completed
 
-Expose `rect` and `circle` generation as a public Rust library via `lib.rs` so other crates can use greek-meander programmatically as a dependency, not just via CLI.
-
-Include a WebAssembly (WASM) target so the library can run in browser-based design tools.
+### Library API
 
 Status: completed in v0.1.5.
 
-## Output Control
+- Exposed rectangle and circle generation through the public Rust library API.
+- Added SVG string generation so other crates can use `greek-meander`
+  programmatically without going through the CLI.
+- Kept native file output available behind the default `native` feature.
 
-- `--no-png` / `--no-svg` flags to skip generating one of the two output files
-- `--scale <FACTOR>` to multiply the PNG pixel dimensions (e.g. `--scale 2` doubles the output resolution; currently 1:1 with the SVG viewBox)
-- Additional export formats: JPEG, PDF (useful for print and laser cutting)
-- `--stdout` to pipe SVG to stdout for integration with other tools
+### WebAssembly Support
 
-## Visual Options
+Status: completed in v0.1.5.
 
-- `--fill-color` to fill the interior of the pattern (currently always transparent)
-- `--background-color` to set a canvas background colour
-- `--direction cw|ccw` to select clockwise or counter-clockwise meander (the two classical chiralities)
-- `--stroke-dash <PATTERN>` for dashed stroke lines, adding aesthetic variety
-- `--theme <NAME>` for named colour presets (e.g. `gold`, `greek-blue`, `black`) so non-designers can get good results without specifying hex codes
-- Animated SVG via `--animate`: uses CSS animation to draw the meander path progressively — makes the output visually striking for web use
+- Added a WASM build path for browser-based use.
+- Exposed JavaScript-callable SVG generation functions for rectangle and circle
+  patterns.
+- Added a browser example showing generated SVG output.
 
-## New Shapes
+### Pipeline-Friendly Output
 
-- **Ellipse** — meander ring on an ellipse with separate `--rx` and `--ry` radii; natural extension of the circle command
-- **Polygon** — meander border on a regular n-sided polygon (hexagon, octagon, etc.); mathematically complex, requires research into path fitting along polygon edges
+Status: completed for the next release.
 
-## Nested Borders
+- Added `--stdout` so generated SVG can be piped to other tools.
+- Added `--no-svg` and `--no-png` for selective file output.
+- Added `--scale <FACTOR>` for higher-resolution PNG rasterization.
+- Kept the default behavior compatible: commands still write both SVG and PNG
+  unless output flags say otherwise.
 
-Support multiple concentric meander bands in a single output — e.g. an inner and outer ring on the circle pattern, or double borders on the rectangle. A common traditional use of the motif.
+## Next: Config File Input
 
-## Config File Input
+Add TOML config files so designs can be saved, shared, reviewed, and reproduced
+without long CLI commands.
 
-Accept a TOML config file as an alternative to CLI flags, making it easy to save, share, and reproduce complex designs.
+### User Interface
 
-## Developer Experience
+Add a top-level CLI option:
 
-- Shell completions for bash, zsh, fish, and PowerShell via `clap_complete` (low effort, high impact)
-- Improved error messages that reference CLI parameter names rather than internal variables (e.g. `"--pattern-count must be at least 4"` instead of `"n must be greater or equal to 19"`)
+- `--config <PATH>`: load shared options, shape selection, and shape-specific
+  settings from a TOML file.
+
+CLI flags should continue to work without config files. When both are provided,
+explicit CLI flags should override values loaded from the config file.
+
+### Behavior
+
+- A config file should be able to describe either a rectangle or circle pattern.
+- Missing fields should fall back to the same defaults as the CLI.
+- Invalid config values should return errors that mention the relevant config
+  field and matching CLI option where possible.
+- Config loading should not change the existing Rust library API unless shared
+  config types make that cleaner.
+
+### Implementation Design
+
+- Add a serializable CLI config model separate from the existing validated
+  geometry config structs.
+- Convert loaded config plus CLI overrides into `GreekKeyRectConfig` or
+  `GreekKeyCircleConfig` only after all defaults are resolved.
+- Keep config file parsing native-only for now.
+- Include at least one example config for each supported shape.
+
+### Done Criteria
+
+- Existing CLI commands continue to work unchanged.
+- `README.md` documents the config format and override behavior.
+- Tests cover rectangle config, circle config, CLI override behavior, and invalid
+  config errors.

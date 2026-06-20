@@ -5,6 +5,8 @@ use greek_meander::{
 };
 #[cfg(feature = "native")]
 use std::path::PathBuf;
+#[cfg(feature = "native")]
+use std::process::Command;
 
 #[cfg(feature = "native")]
 const PNG_MAGIC: [u8; 8] = [137, 80, 78, 71, 13, 10, 26, 10];
@@ -34,6 +36,15 @@ impl Drop for TempFiles {
             let _ = std::fs::remove_file(path);
         }
     }
+}
+
+#[cfg(feature = "native")]
+fn png_dimensions(path: &str) -> (u32, u32) {
+    let bytes = std::fs::read(path).unwrap();
+    assert!(bytes.starts_with(&PNG_MAGIC));
+    let width = u32::from_be_bytes(bytes[16..20].try_into().unwrap());
+    let height = u32::from_be_bytes(bytes[20..24].try_into().unwrap());
+    (width, height)
 }
 
 // --- rect::generate_pattern_svg (native only) ---
@@ -79,6 +90,127 @@ fn rect_png_has_valid_magic_bytes() {
         bytes.starts_with(&PNG_MAGIC),
         "PNG output should start with the PNG magic bytes"
     );
+}
+
+#[cfg(feature = "native")]
+#[test]
+fn cli_can_skip_png() {
+    let path = temp_path("gm_test_skip_png");
+    let _guard = TempFiles::for_base(&path);
+
+    let output = Command::new(env!("CARGO_BIN_EXE_greek-meander"))
+        .args([
+            "--no-png", "--file", &path, "rect", "--size", "10", "--width", "4", "--height", "4",
+        ])
+        .output()
+        .unwrap();
+
+    assert!(output.status.success());
+    assert!(PathBuf::from(format!("{}.svg", path)).exists());
+    assert!(!PathBuf::from(format!("{}.png", path)).exists());
+}
+
+#[cfg(feature = "native")]
+#[test]
+fn cli_can_skip_svg() {
+    let path = temp_path("gm_test_skip_svg");
+    let _guard = TempFiles::for_base(&path);
+
+    let output = Command::new(env!("CARGO_BIN_EXE_greek-meander"))
+        .args([
+            "--no-svg", "--file", &path, "rect", "--size", "10", "--width", "4", "--height", "4",
+        ])
+        .output()
+        .unwrap();
+
+    assert!(output.status.success());
+    assert!(!PathBuf::from(format!("{}.svg", path)).exists());
+    assert!(PathBuf::from(format!("{}.png", path)).exists());
+}
+
+#[cfg(feature = "native")]
+#[test]
+fn cli_scale_changes_png_dimensions() {
+    let normal_path = temp_path("gm_test_scale_normal");
+    let scaled_path = temp_path("gm_test_scale_scaled");
+    let _normal_guard = TempFiles::for_base(&normal_path);
+    let _scaled_guard = TempFiles::for_base(&scaled_path);
+
+    let normal_output = Command::new(env!("CARGO_BIN_EXE_greek-meander"))
+        .args([
+            "--no-svg",
+            "--file",
+            &normal_path,
+            "rect",
+            "--size",
+            "10",
+            "--width",
+            "4",
+            "--height",
+            "4",
+        ])
+        .output()
+        .unwrap();
+    let scaled_output = Command::new(env!("CARGO_BIN_EXE_greek-meander"))
+        .args([
+            "--no-svg",
+            "--scale",
+            "2",
+            "--file",
+            &scaled_path,
+            "rect",
+            "--size",
+            "10",
+            "--width",
+            "4",
+            "--height",
+            "4",
+        ])
+        .output()
+        .unwrap();
+
+    assert!(normal_output.status.success());
+    assert!(scaled_output.status.success());
+
+    let normal = png_dimensions(&format!("{}.png", normal_path));
+    let scaled = png_dimensions(&format!("{}.png", scaled_path));
+    assert_eq!(scaled, (normal.0 * 2, normal.1 * 2));
+}
+
+#[cfg(feature = "native")]
+#[test]
+fn cli_stdout_only_writes_svg_to_stdout_without_files() {
+    let path = temp_path("gm_test_stdout_only");
+    let _guard = TempFiles::for_base(&path);
+
+    let output = Command::new(env!("CARGO_BIN_EXE_greek-meander"))
+        .args([
+            "--stdout", "--no-svg", "--no-png", "--file", &path, "rect", "--size", "10", "--width",
+            "4", "--height", "4",
+        ])
+        .output()
+        .unwrap();
+
+    assert!(output.status.success());
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    assert!(stdout.contains("<svg"));
+    assert!(stdout.contains("<path"));
+    assert!(output.stderr.is_empty());
+    assert!(!PathBuf::from(format!("{}.svg", path)).exists());
+    assert!(!PathBuf::from(format!("{}.png", path)).exists());
+}
+
+#[cfg(feature = "native")]
+#[test]
+fn cli_rejects_no_output() {
+    let output = Command::new(env!("CARGO_BIN_EXE_greek-meander"))
+        .args(["--no-svg", "--no-png", "rect"])
+        .output()
+        .unwrap();
+
+    assert!(!output.status.success());
+    let stderr = String::from_utf8(output.stderr).unwrap();
+    assert!(stderr.contains("at least one output is required"));
 }
 
 // --- circle::generate_pattern_svg (native only) ---

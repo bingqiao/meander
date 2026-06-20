@@ -16,16 +16,20 @@ pub(crate) fn save_and_convert_svg(
     document: Document,
     filename: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let svg_filename = format!("{}.svg", filename);
-    let png_filename = format!("{}.png", filename);
-
     // Serialize once; write to .svg and reuse the bytes for rasterization.
     let mut svg_content = Vec::new();
     svg::write(&mut svg_content, &document)?;
-    std::fs::write(&svg_filename, &svg_content)?;
+    write_default_outputs(&svg_content, filename)
+}
 
-    let tree = Tree::from_data(&svg_content, &resvg::usvg::Options::default())?;
+#[cfg(feature = "native")]
+fn write_default_outputs(
+    svg_content: &[u8],
+    filename: &str,
+) -> Result<(), Box<dyn std::error::Error>> {
+    std::fs::write(format!("{}.svg", filename), svg_content)?;
 
+    let tree = Tree::from_data(svg_content, &resvg::usvg::Options::default())?;
     let pixmap_size = tree.size().to_int_size();
     let mut pixmap = resvg::tiny_skia::Pixmap::new(pixmap_size.width(), pixmap_size.height())
         .ok_or("canvas has zero dimensions")?;
@@ -34,7 +38,7 @@ pub(crate) fn save_and_convert_svg(
         resvg::tiny_skia::Transform::identity(),
         &mut pixmap.as_mut(),
     );
-    pixmap.save_png(png_filename)?;
+    pixmap.save_png(format!("{}.png", filename))?;
 
     Ok(())
 }

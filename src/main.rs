@@ -1,7 +1,9 @@
 use clap::Parser;
 
 mod args;
+mod cli_output;
 use args::{Args, Commands};
+use cli_output::OutputOptions;
 
 use greek_meander::{
     circle,
@@ -12,6 +14,15 @@ use greek_meander::{
 fn main() {
     let args = Args::parse();
 
+    let output_options =
+        match OutputOptions::new(!args.no_svg, !args.no_png, args.stdout, args.scale) {
+            Ok(options) => options,
+            Err(e) => {
+                eprintln!("Error: {}", e);
+                std::process::exit(1);
+            }
+        };
+
     let result = match args.command {
         Commands::Rect(rect_args) => GreekKeyRectConfig::new(
             rect_args.size,
@@ -21,7 +32,8 @@ fn main() {
             args.stroke_width,
         )
         .and_then(|config| {
-            rect::generate_pattern_svg(&config, &args.stroke_color, args.stroke_opacity, &args.file)
+            let svg = rect::generate_svg_string(&config, &args.stroke_color, args.stroke_opacity);
+            cli_output::write_outputs(svg.as_bytes(), &args.file, &output_options)
         }),
         Commands::Circle(circle_args) => GreekKeyCircleConfig::new(
             circle_args.radius,
@@ -30,12 +42,8 @@ fn main() {
             args.stroke_width,
         )
         .and_then(|config| {
-            circle::generate_pattern_svg(
-                &config,
-                &args.stroke_color,
-                args.stroke_opacity,
-                &args.file,
-            )
+            let svg = circle::generate_svg_string(&config, &args.stroke_color, args.stroke_opacity);
+            cli_output::write_outputs(svg.as_bytes(), &args.file, &output_options)
         }),
     };
 

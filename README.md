@@ -35,6 +35,10 @@ cargo install greek-meander
 | `--stroke-opacity` | The opacity of the stroke | 0.7 |
 | `--border-margin` | The margin of the border | 1 |
 | `--file` | The base name of the output file | "meander" |
+| `--stdout` | Write generated SVG markup to stdout | false |
+| `--no-svg` | Skip writing the SVG file | false |
+| `--no-png` | Skip writing the PNG file | false |
+| `--scale` | Multiply PNG output dimensions without changing the SVG viewBox | 1.0 |
 
 ### Rectangle
 
@@ -82,6 +86,29 @@ greek-meander --stroke-color "red" --file "my_circle_design" circle --radius 120
 ```
 
 This will generate `my_circle_design.svg` and `my_circle_design.png`.
+
+### Output Control
+
+By default, `greek-meander` writes both `<file>.svg` and `<file>.png`.
+
+Use `--stdout` to pipe SVG markup to another command:
+
+```bash
+greek-meander --stdout --no-svg --no-png rect > meander.svg
+```
+
+Use `--no-png` or `--no-svg` to generate only one file type:
+
+```bash
+greek-meander --no-png rect
+greek-meander --no-svg circle
+```
+
+Use `--scale` to increase PNG resolution while preserving the SVG viewBox:
+
+```bash
+greek-meander --scale 2 rect
+```
 
 ## Build and Run
 

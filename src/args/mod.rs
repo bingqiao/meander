@@ -13,6 +13,14 @@ pub struct Args {
     pub border_margin: i32,
     #[arg(long, default_value_t = String::from("meander"))]
     pub file: String,
+    #[arg(long)]
+    pub stdout: bool,
+    #[arg(long)]
+    pub no_svg: bool,
+    #[arg(long)]
+    pub no_png: bool,
+    #[arg(long, default_value_t = 1.0)]
+    pub scale: f32,
     #[command(subcommand)]
     pub command: Commands,
 }
