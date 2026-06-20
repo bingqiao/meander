@@ -107,6 +107,12 @@ This will generate `my_design.svg` and `my_design.png`.
 
 ## Browser WASM
 
+Install `wasm-pack` if it is not already available:
+
+```bash
+cargo install wasm-pack
+```
+
 To build the browser WebAssembly package, disable native file output and enable
 the `wasm` feature:
 
