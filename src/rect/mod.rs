@@ -1,10 +1,8 @@
-use resvg::render;
-use resvg::usvg::Tree;
-
 use svg::Document;
 use svg::node::element::Path as SvgPath;
 use svg::node::element::path::Data;
 
+use crate::common::save_and_convert_svg;
 use crate::config::GreekKeyRectConfig;
 
 fn draw_horizontal_unit(data: Data, key_unit_length: i32) -> Data {
@@ -124,7 +122,7 @@ pub fn generate_pattern_svg(
     stroke_color: &str,
     stroke_opacity: f32,
     filename: &str,
-) {
+) -> Result<(), Box<dyn std::error::Error>> {
     let (width, height) = config.get_canvas_size();
     let mut document = Document::new().set("viewBox", (0, 0, width, height));
 
@@ -162,26 +160,5 @@ pub fn generate_pattern_svg(
     );
     document = document.add(inner_frame);
 
-    let svg_filename = format!("{}.svg", filename);
-    svg::save(&svg_filename, &document).unwrap();
-
-    let png_filename = format!("{}.png", filename);
-    let mut fontdb = resvg::usvg::fontdb::Database::new();
-    fontdb.load_system_fonts();
-
-    let tree = Tree::from_data(
-        &std::fs::read(&svg_filename).unwrap(),
-        &resvg::usvg::Options::default(),
-    )
-    .unwrap();
-
-    let pixmap_size = tree.size().to_int_size();
-    let mut pixmap =
-        resvg::tiny_skia::Pixmap::new(pixmap_size.width(), pixmap_size.height()).unwrap();
-    render(
-        &tree,
-        resvg::tiny_skia::Transform::identity(),
-        &mut pixmap.as_mut(),
-    );
-    pixmap.save_png(png_filename).unwrap();
+    save_and_convert_svg(document, filename)
 }
