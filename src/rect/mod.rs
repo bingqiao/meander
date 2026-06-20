@@ -116,13 +116,14 @@ fn draw_greek_key_patterns(config: &GreekKeyRectConfig) -> Data {
     data.close()
 }
 
+/// Generates a rectangle Greek Key pattern and writes `<filename>.svg` and `<filename>.png`.
 pub fn generate_pattern_svg(
     config: &GreekKeyRectConfig,
-    stroke_width: f32,
     stroke_color: &str,
     stroke_opacity: f32,
     filename: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
+    let stroke_width = config.stroke_width;
     let (width, height) = config.get_canvas_size();
     let mut document = Document::new().set("viewBox", (0, 0, width, height));
 

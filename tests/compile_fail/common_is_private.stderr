@@ -1,0 +1,13 @@
+error[E0603]: module `common` is private
+ --> tests/compile_fail/common_is_private.rs:3:28
+  |
+3 |     let _ = greek_meander::common::Point { x: 0.0, y: 0.0 };
+  |                            ^^^^^^  ----- struct `Point` is not publicly re-exported
+  |                            |
+  |                            private module
+  |
+note: the module `common` is defined here
+ --> src/lib.rs
+  |
+  | pub(crate) mod common;
+  | ^^^^^^^^^^^^^^^^^^^^^
