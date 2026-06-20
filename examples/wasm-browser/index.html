@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Greek Meander WASM Example</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #f6f5f2;
+        color: #1d1b18;
+      }
+
+      body {
+        margin: 0;
+      }
+
+      main {
+        display: grid;
+        gap: 20px;
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: 32px;
+      }
+
+      .toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 1.6rem;
+        font-weight: 650;
+      }
+
+      button,
+      select,
+      input {
+        border: 1px solid #817869;
+        border-radius: 6px;
+        background: #ffffff;
+        color: #1d1b18;
+        padding: 8px 12px;
+        font: inherit;
+      }
+
+      button {
+        cursor: pointer;
+      }
+
+      .controls {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(120px, 1fr));
+        gap: 12px;
+        align-items: end;
+        padding: 16px;
+        border: 1px solid #d6d0c5;
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        font-size: 0.85rem;
+        color: #4c463e;
+      }
+
+      label span {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      output {
+        color: #1d1b18;
+        font-variant-numeric: tabular-nums;
+      }
+
+      input[type="range"] {
+        width: 100%;
+        padding-inline: 0;
+      }
+
+      .output {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+      }
+
+      figure {
+        margin: 0;
+        padding: 16px;
+        border: 1px solid #d6d0c5;
+        border-radius: 8px;
+        background: #ffffff;
+      }
+
+      figcaption {
+        margin-bottom: 12px;
+        font-weight: 650;
+      }
+
+      .svg-host {
+        overflow: auto;
+      }
+
+      .svg-host svg {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+
+      #status {
+        min-height: 1.4em;
+        color: #5f564b;
+      }
+
+      @media (max-width: 840px) {
+        .controls {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 520px) {
+        main {
+          padding: 20px;
+        }
+
+        .controls {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="toolbar">
+        <h1>Greek Meander WASM</h1>
+        <button id="reset" type="button">Reset</button>
+      </div>
+      <form class="controls" id="controls">
+        <label>
+          Color
+          <select id="palette">
+            <option value="#0F5D7C,#B15E2B">Aegean</option>
+            <option value="#1F2933,#A47C30">Ink</option>
+            <option value="#6B2D5C,#23745A">Museum</option>
+            <option value="#8C2F39,#2F6F8F">Tile</option>
+          </select>
+        </label>
+        <label>
+          <span>Stroke <output id="stroke-value">2.5</output></span>
+          <input id="stroke" type="range" min="1.5" max="5" value="2.5" step="0.5">
+        </label>
+        <label>
+          <span>Opacity <output id="opacity-value">0.9</output></span>
+          <input id="opacity" type="range" min="0.45" max="1" value="0.9" step="0.05">
+        </label>
+        <label>
+          <span>Rect cells <output id="rect-value">12 x 7</output></span>
+          <input id="rect-width" type="range" min="8" max="18" value="12" step="1">
+        </label>
+        <label>
+          <span>Circle count <output id="circle-count-value">24</output></span>
+          <input id="circle-count" type="range" min="16" max="40" value="24" step="2">
+        </label>
+        <label>
+          <span>Circle size <output id="radius-value">160</output></span>
+          <input id="radius" type="range" min="110" max="210" value="160" step="10">
+        </label>
+      </form>
+      <div id="status">Loading WASM...</div>
+      <section class="output" aria-label="Generated SVG output">
+        <figure>
+          <figcaption>Rectangle</figcaption>
+          <div id="rect-output" class="svg-host"></div>
+        </figure>
+        <figure>
+          <figcaption>Circle</figcaption>
+          <div id="circle-output" class="svg-host"></div>
+        </figure>
+      </section>
+    </main>
+
+    <script type="module">
+      import init, { circle_generate_svg, rect_generate_svg } from "../../pkg/greek_meander.js";
+
+      const status = document.querySelector("#status");
+      const rectOutput = document.querySelector("#rect-output");
+      const circleOutput = document.querySelector("#circle-output");
+      const controls = document.querySelector("#controls");
+      const reset = document.querySelector("#reset");
+      const palette = document.querySelector("#palette");
+      const stroke = document.querySelector("#stroke");
+      const opacity = document.querySelector("#opacity");
+      const rectWidth = document.querySelector("#rect-width");
+      const circleCount = document.querySelector("#circle-count");
+      const radius = document.querySelector("#radius");
+      const strokeValue = document.querySelector("#stroke-value");
+      const opacityValue = document.querySelector("#opacity-value");
+      const rectValue = document.querySelector("#rect-value");
+      const circleCountValue = document.querySelector("#circle-count-value");
+      const radiusValue = document.querySelector("#radius-value");
+
+      const defaults = {
+        palette: "#0F5D7C,#B15E2B",
+        stroke: "2.5",
+        opacity: "0.9",
+        rectWidth: "12",
+        circleCount: "24",
+        radius: "160",
+      };
+
+      function numberValue(input) {
+        return Number.parseFloat(input.value);
+      }
+
+      function render() {
+        const [rectColor, circleColor] = palette.value.split(",");
+        const strokeWidth = numberValue(stroke);
+        const strokeOpacity = numberValue(opacity);
+        const width = Number.parseInt(rectWidth.value, 10);
+        const height = Math.max(5, Math.round(width * 0.58));
+        const count = Number.parseInt(circleCount.value, 10);
+        const outerRadius = numberValue(radius);
+
+        strokeValue.value = strokeWidth.toFixed(1);
+        opacityValue.value = strokeOpacity.toFixed(2);
+        rectValue.value = `${width} x ${height}`;
+        circleCountValue.value = count.toString();
+        radiusValue.value = outerRadius.toString();
+
+        rectOutput.innerHTML = rect_generate_svg(
+          18,
+          width,
+          height,
+          8,
+          strokeWidth,
+          rectColor,
+          strokeOpacity,
+        );
+        circleOutput.innerHTML = circle_generate_svg(
+          outerRadius,
+          count,
+          8,
+          strokeWidth,
+          circleColor,
+          strokeOpacity,
+        );
+        status.textContent = "Generated SVG in the browser via WebAssembly.";
+      }
+
+      function resetControls() {
+        palette.value = defaults.palette;
+        stroke.value = defaults.stroke;
+        opacity.value = defaults.opacity;
+        rectWidth.value = defaults.rectWidth;
+        circleCount.value = defaults.circleCount;
+        radius.value = defaults.radius;
+        render();
+      }
+
+      try {
+        await init();
+        render();
+        controls.addEventListener("input", render);
+        reset.addEventListener("click", resetControls);
+      } catch (error) {
+        status.textContent = error instanceof Error ? error.message : String(error);
+        throw error;
+      }
+    </script>
+  </body>
+</html>

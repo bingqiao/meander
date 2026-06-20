@@ -6,6 +6,8 @@ Expose `rect` and `circle` generation as a public Rust library via `lib.rs` so o
 
 Include a WebAssembly (WASM) target so the library can run in browser-based design tools.
 
+Status: completed in v0.1.5.
+
 ## Output Control
 
 - `--no-png` / `--no-svg` flags to skip generating one of the two output files

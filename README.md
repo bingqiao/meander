@@ -105,6 +105,36 @@ cargo run -- --stroke-color "blue" --file "my_design" rect --size 12 --width 22 
 
 This will generate `my_design.svg` and `my_design.png`.
 
+## Browser WASM
+
+Install `wasm-pack` if it is not already available:
+
+```bash
+cargo install wasm-pack
+```
+
+To build the browser WebAssembly package, disable native file output and enable
+the `wasm` feature:
+
+```bash
+wasm-pack build --target web --no-default-features --features wasm
+```
+
+This creates a `pkg/` directory with JavaScript bindings for
+`rect_generate_svg` and `circle_generate_svg`, which return SVG markup strings.
+
+To try the browser example:
+
+```bash
+python3 -m http.server 8000
+```
+
+Then visit:
+
+```text
+http://localhost:8000/examples/wasm-browser/
+```
+
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
