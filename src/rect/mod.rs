@@ -117,7 +117,11 @@ fn draw_greek_key_patterns(config: &GreekKeyRectConfig) -> Data {
     data.close()
 }
 
-fn build_document(config: &GreekKeyRectConfig, stroke_color: &str, stroke_opacity: f32) -> Document {
+fn build_document(
+    config: &GreekKeyRectConfig,
+    stroke_color: &str,
+    stroke_opacity: f32,
+) -> Document {
     let stroke_width = config.stroke_width;
     let (width, height) = config.get_canvas_size();
     let mut document = Document::new().set("viewBox", (0, 0, width, height));
@@ -134,14 +138,24 @@ fn build_document(config: &GreekKeyRectConfig, stroke_color: &str, stroke_opacit
 
     let (outer_x, outer_y, outer_width, outer_height) = config.get_outer_frame_size();
     document = document.add(draw_frame(
-        outer_x, outer_y, outer_width, outer_height,
-        stroke_color, stroke_width, stroke_opacity,
+        outer_x,
+        outer_y,
+        outer_width,
+        outer_height,
+        stroke_color,
+        stroke_width,
+        stroke_opacity,
     ));
 
     let (inner_x, inner_y, inner_width, inner_height) = config.get_inner_frame_size();
     document = document.add(draw_frame(
-        inner_x, inner_y, inner_width, inner_height,
-        stroke_color, stroke_width, stroke_opacity,
+        inner_x,
+        inner_y,
+        inner_width,
+        inner_height,
+        stroke_color,
+        stroke_width,
+        stroke_opacity,
     ));
 
     document
@@ -170,5 +184,8 @@ pub fn generate_pattern_svg(
     stroke_opacity: f32,
     filename: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    save_and_convert_svg(build_document(config, stroke_color, stroke_opacity), filename)
+    save_and_convert_svg(
+        build_document(config, stroke_color, stroke_opacity),
+        filename,
+    )
 }

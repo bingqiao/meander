@@ -1,6 +1,7 @@
 use greek_meander::{
-    circle, rect,
+    circle,
     config::{GreekKeyCircleConfig, GreekKeyRectConfig},
+    rect,
 };
 #[cfg(feature = "native")]
 use std::path::PathBuf;
@@ -56,8 +57,14 @@ fn rect_svg_has_valid_content() {
     let _guard = TempFiles::for_base(&path);
     rect::generate_pattern_svg(&config, "#AB8E0E", 0.7, &path).unwrap();
     let content = std::fs::read_to_string(format!("{}.svg", path)).unwrap();
-    assert!(content.contains("<svg"), "SVG output should contain an <svg> element");
-    assert!(content.contains("viewBox"), "SVG output should contain a viewBox attribute");
+    assert!(
+        content.contains("<svg"),
+        "SVG output should contain an <svg> element"
+    );
+    assert!(
+        content.contains("viewBox"),
+        "SVG output should contain a viewBox attribute"
+    );
 }
 
 #[cfg(feature = "native")]
@@ -95,8 +102,14 @@ fn circle_svg_has_valid_content() {
     let _guard = TempFiles::for_base(&path);
     circle::generate_pattern_svg(&config, "#AB8E0E", 0.7, &path).unwrap();
     let content = std::fs::read_to_string(format!("{}.svg", path)).unwrap();
-    assert!(content.contains("<svg"), "SVG output should contain an <svg> element");
-    assert!(content.contains("viewBox"), "SVG output should contain a viewBox attribute");
+    assert!(
+        content.contains("<svg"),
+        "SVG output should contain an <svg> element"
+    );
+    assert!(
+        content.contains("viewBox"),
+        "SVG output should contain a viewBox attribute"
+    );
 }
 
 #[cfg(feature = "native")]
@@ -119,8 +132,14 @@ fn circle_png_has_valid_magic_bytes() {
 fn rect_svg_string_is_valid_svg() {
     let config = GreekKeyRectConfig::new(10, 4, 4, 5, 2.0).unwrap();
     let svg = rect::generate_svg_string(&config, "#AB8E0E", 0.7);
-    assert!(svg.contains("<svg"), "svg string should contain an <svg> element");
-    assert!(svg.contains("viewBox"), "svg string should contain a viewBox attribute");
+    assert!(
+        svg.contains("<svg"),
+        "svg string should contain an <svg> element"
+    );
+    assert!(
+        svg.contains("viewBox"),
+        "svg string should contain a viewBox attribute"
+    );
     assert!(svg.contains("<path"), "svg string should contain path data");
 }
 
@@ -128,8 +147,14 @@ fn rect_svg_string_is_valid_svg() {
 fn circle_svg_string_is_valid_svg() {
     let config = GreekKeyCircleConfig::new(100.0, 10, 5, 2.0).unwrap();
     let svg = circle::generate_svg_string(&config, "#AB8E0E", 0.7);
-    assert!(svg.contains("<svg"), "svg string should contain an <svg> element");
-    assert!(svg.contains("viewBox"), "svg string should contain a viewBox attribute");
+    assert!(
+        svg.contains("<svg"),
+        "svg string should contain an <svg> element"
+    );
+    assert!(
+        svg.contains("viewBox"),
+        "svg string should contain a viewBox attribute"
+    );
     assert!(svg.contains("<path"), "svg string should contain path data");
 }
 

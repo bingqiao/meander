@@ -1,4 +1,4 @@
-use greek_meander::{circle, GreekKeyCircleConfig};
+use greek_meander::{GreekKeyCircleConfig, circle};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config = GreekKeyCircleConfig::new(300.0, 30, 10, 3.0)?;

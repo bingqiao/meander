@@ -80,7 +80,8 @@ impl GreekKeyRectConfig {
     pub(crate) fn get_inner_frame_size(&self) -> (f64, f64, i32, i32) {
         let inner_x =
             (6 * self.key_unit_length + self.border_margin) as f64 + self.stroke_width as f64;
-        let inner_y = (6 * self.key_unit_length + self.border_margin) as f64 + self.stroke_width as f64;
+        let inner_y =
+            (6 * self.key_unit_length + self.border_margin) as f64 + self.stroke_width as f64;
         let inner_width = (self.width_units - 2) * self.key_pattern_length;
         let inner_height = (self.height_units - 2) * self.key_pattern_length;
         (inner_x, inner_y, inner_width, inner_height)
@@ -175,11 +176,17 @@ pub(crate) fn calculate_circle_points(centre: Point, n: i32, p1: Point, r: f64) 
 impl GreekKeyCircleConfig {
     /// Creates a new circle config.
     ///
-    /// Returns an error if `r_o` ≤ 0, `pattern_count` < 4, `border_margin` < 0,
+    /// Returns an error if `r_o` is not a positive finite number, `pattern_count` < 4,
+    /// `border_margin` < 0,
     /// or `stroke_width` is not a positive finite number.
-    pub fn new(r_o: f64, pattern_count: i32, border_margin: i32, stroke_width: f32) -> Result<Self, Box<dyn std::error::Error>> {
-        if r_o <= 0.0 {
-            return Err("--radius must be greater than 0".into());
+    pub fn new(
+        r_o: f64,
+        pattern_count: i32,
+        border_margin: i32,
+        stroke_width: f32,
+    ) -> Result<Self, Box<dyn std::error::Error>> {
+        if r_o <= 0.0 || !r_o.is_finite() {
+            return Err("--radius must be a positive finite number".into());
         }
         if pattern_count < 4 {
             return Err("--pattern-count must be at least 4".into());
@@ -219,7 +226,10 @@ impl GreekKeyCircleConfig {
     ) -> ([Point; 6], [Point; 6], [Point; 6], [Point; 6], [Point; 6]) {
         let centre = self.get_centre();
         let n = self.pattern_count;
-        let start = |r: f64| Point { x: centre.x, y: centre.y - r };
+        let start = |r: f64| Point {
+            x: centre.x,
+            y: centre.y - r,
+        };
         let points_a = calculate_circle_points(centre, n, start(self.radii.r_a), self.radii.r_a);
         let points_b = calculate_circle_points(centre, n, start(self.radii.r_b), self.radii.r_b);
         let points_c = calculate_circle_points(centre, n, start(self.radii.r_c), self.radii.r_c);
@@ -343,6 +353,18 @@ mod tests {
     #[test]
     fn circle_negative_radius_fails() {
         let e = GreekKeyCircleConfig::new(-50.0, 30, 10, 3.0).unwrap_err();
+        assert!(e.to_string().contains("--radius"));
+    }
+
+    #[test]
+    fn circle_nan_radius_fails() {
+        let e = GreekKeyCircleConfig::new(f64::NAN, 30, 10, 3.0).unwrap_err();
+        assert!(e.to_string().contains("--radius"));
+    }
+
+    #[test]
+    fn circle_infinite_radius_fails() {
+        let e = GreekKeyCircleConfig::new(f64::INFINITY, 30, 10, 3.0).unwrap_err();
         assert!(e.to_string().contains("--radius"));
     }
 

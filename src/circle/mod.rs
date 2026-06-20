@@ -55,7 +55,11 @@ fn draw_frame(
         .set("stroke-opacity", stroke_opacity)
 }
 
-fn build_document(config: &GreekKeyCircleConfig, stroke_color: &str, stroke_opacity: f32) -> Document {
+fn build_document(
+    config: &GreekKeyCircleConfig,
+    stroke_color: &str,
+    stroke_opacity: f32,
+) -> Document {
     let stroke_width = config.stroke_width;
     let (width, height) = config.get_canvas_size();
     let mut document = Document::new().set("viewBox", (0, 0, width, height));
@@ -72,12 +76,20 @@ fn build_document(config: &GreekKeyCircleConfig, stroke_color: &str, stroke_opac
 
     let centre = config.get_centre();
     document = document.add(draw_frame(
-        centre.x, centre.y, config.radii.r_i,
-        stroke_color, stroke_width, stroke_opacity,
+        centre.x,
+        centre.y,
+        config.radii.r_i,
+        stroke_color,
+        stroke_width,
+        stroke_opacity,
     ));
     document = document.add(draw_frame(
-        centre.x, centre.y, config.radii.r_o,
-        stroke_color, stroke_width, stroke_opacity,
+        centre.x,
+        centre.y,
+        config.radii.r_o,
+        stroke_color,
+        stroke_width,
+        stroke_opacity,
     ));
 
     document
@@ -106,5 +118,8 @@ pub fn generate_pattern_svg(
     stroke_opacity: f32,
     filename: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    save_and_convert_svg(build_document(config, stroke_color, stroke_opacity), filename)
+    save_and_convert_svg(
+        build_document(config, stroke_color, stroke_opacity),
+        filename,
+    )
 }

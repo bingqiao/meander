@@ -1,4 +1,4 @@
-use greek_meander::{rect, GreekKeyRectConfig};
+use greek_meander::{GreekKeyRectConfig, rect};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config = GreekKeyRectConfig::new(25, 16, 9, 10, 3.0)?;

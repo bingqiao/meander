@@ -8,6 +8,9 @@ repository = "https://github.com/bingqiao/meander"
 keywords = ["greek-key", "meander", "svg", "rectangle", "circle"]
 categories = ["multimedia::images"]
 
+[lib]
+crate-type = ["cdylib", "rlib"]
+
 [[bin]]
 name = "greek-meander"
 required-features = ["native"]
@@ -23,11 +26,14 @@ required-features = ["native"]
 [features]
 default = ["native"]
 native = ["dep:resvg", "dep:clap"]
+wasm = ["dep:wasm-bindgen"]
 
 [dev-dependencies]
 trybuild = "1.0"
+wasm-bindgen-test = "0.3"
 
 [dependencies]
 clap = { version = "4.5.46", features = ["derive"], optional = true }
 resvg = { version = "0.45.1", optional = true }
 svg = "0.18.0"
+wasm-bindgen = { version = "0.2", optional = true }
