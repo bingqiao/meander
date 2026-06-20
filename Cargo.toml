@@ -12,14 +12,22 @@ categories = ["multimedia::images"]
 name = "greek-meander"
 required-features = ["native"]
 
+[[example]]
+name = "rect"
+required-features = ["native"]
+
+[[example]]
+name = "circle"
+required-features = ["native"]
+
 [features]
 default = ["native"]
-native = ["dep:resvg"]
+native = ["dep:resvg", "dep:clap"]
 
 [dev-dependencies]
 trybuild = "1.0"
 
 [dependencies]
-clap = { version = "4.5.46", features = ["derive"] }
+clap = { version = "4.5.46", features = ["derive"], optional = true }
 resvg = { version = "0.45.1", optional = true }
 svg = "0.18.0"

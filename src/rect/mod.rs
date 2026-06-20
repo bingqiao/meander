@@ -155,11 +155,8 @@ pub fn generate_svg_string(
     config: &GreekKeyRectConfig,
     stroke_color: &str,
     stroke_opacity: f32,
-) -> Result<String, Box<dyn std::error::Error>> {
-    let document = build_document(config, stroke_color, stroke_opacity);
-    let mut content = Vec::new();
-    svg::write(&mut content, &document)?;
-    Ok(String::from_utf8(content)?)
+) -> String {
+    build_document(config, stroke_color, stroke_opacity).to_string()
 }
 
 /// Generates a rectangle Greek Key pattern and writes `<filename>.svg` and `<filename>.png`.

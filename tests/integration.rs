@@ -2,10 +2,13 @@ use greek_meander::{
     circle, rect,
     config::{GreekKeyCircleConfig, GreekKeyRectConfig},
 };
+#[cfg(feature = "native")]
 use std::path::PathBuf;
 
+#[cfg(feature = "native")]
 const PNG_MAGIC: [u8; 8] = [137, 80, 78, 71, 13, 10, 26, 10];
 
+#[cfg(feature = "native")]
 fn temp_path(name: &str) -> String {
     std::env::temp_dir()
         .join(name)
@@ -13,14 +16,17 @@ fn temp_path(name: &str) -> String {
         .into_owned()
 }
 
+#[cfg(feature = "native")]
 struct TempFiles(Vec<String>);
 
+#[cfg(feature = "native")]
 impl TempFiles {
     fn for_base(base: &str) -> Self {
         Self(vec![format!("{}.svg", base), format!("{}.png", base)])
     }
 }
 
+#[cfg(feature = "native")]
 impl Drop for TempFiles {
     fn drop(&mut self) {
         for path in &self.0 {
@@ -29,8 +35,9 @@ impl Drop for TempFiles {
     }
 }
 
-// --- rect::generate_pattern_svg ---
+// --- rect::generate_pattern_svg (native only) ---
 
+#[cfg(feature = "native")]
 #[test]
 fn rect_creates_svg_and_png() {
     let config = GreekKeyRectConfig::new(10, 4, 4, 5, 2.0).unwrap();
@@ -41,6 +48,7 @@ fn rect_creates_svg_and_png() {
     assert!(PathBuf::from(format!("{}.png", path)).exists());
 }
 
+#[cfg(feature = "native")]
 #[test]
 fn rect_svg_has_valid_content() {
     let config = GreekKeyRectConfig::new(10, 4, 4, 5, 2.0).unwrap();
@@ -52,6 +60,7 @@ fn rect_svg_has_valid_content() {
     assert!(content.contains("viewBox"), "SVG output should contain a viewBox attribute");
 }
 
+#[cfg(feature = "native")]
 #[test]
 fn rect_png_has_valid_magic_bytes() {
     let config = GreekKeyRectConfig::new(10, 4, 4, 5, 2.0).unwrap();
@@ -65,8 +74,9 @@ fn rect_png_has_valid_magic_bytes() {
     );
 }
 
-// --- circle::generate_pattern_svg ---
+// --- circle::generate_pattern_svg (native only) ---
 
+#[cfg(feature = "native")]
 #[test]
 fn circle_creates_svg_and_png() {
     let config = GreekKeyCircleConfig::new(100.0, 10, 5, 2.0).unwrap();
@@ -77,6 +87,7 @@ fn circle_creates_svg_and_png() {
     assert!(PathBuf::from(format!("{}.png", path)).exists());
 }
 
+#[cfg(feature = "native")]
 #[test]
 fn circle_svg_has_valid_content() {
     let config = GreekKeyCircleConfig::new(100.0, 10, 5, 2.0).unwrap();
@@ -88,6 +99,7 @@ fn circle_svg_has_valid_content() {
     assert!(content.contains("viewBox"), "SVG output should contain a viewBox attribute");
 }
 
+#[cfg(feature = "native")]
 #[test]
 fn circle_png_has_valid_magic_bytes() {
     let config = GreekKeyCircleConfig::new(100.0, 10, 5, 2.0).unwrap();
@@ -101,22 +113,24 @@ fn circle_png_has_valid_magic_bytes() {
     );
 }
 
-// --- generate_svg_string (WASM-safe path) ---
+// --- generate_svg_string (always available, WASM-safe) ---
 
 #[test]
 fn rect_svg_string_is_valid_svg() {
     let config = GreekKeyRectConfig::new(10, 4, 4, 5, 2.0).unwrap();
-    let svg = rect::generate_svg_string(&config, "#AB8E0E", 0.7).unwrap();
+    let svg = rect::generate_svg_string(&config, "#AB8E0E", 0.7);
     assert!(svg.contains("<svg"), "svg string should contain an <svg> element");
     assert!(svg.contains("viewBox"), "svg string should contain a viewBox attribute");
+    assert!(svg.contains("<path"), "svg string should contain path data");
 }
 
 #[test]
 fn circle_svg_string_is_valid_svg() {
     let config = GreekKeyCircleConfig::new(100.0, 10, 5, 2.0).unwrap();
-    let svg = circle::generate_svg_string(&config, "#AB8E0E", 0.7).unwrap();
+    let svg = circle::generate_svg_string(&config, "#AB8E0E", 0.7);
     assert!(svg.contains("<svg"), "svg string should contain an <svg> element");
     assert!(svg.contains("viewBox"), "svg string should contain a viewBox attribute");
+    assert!(svg.contains("<path"), "svg string should contain path data");
 }
 
 // --- public type surface ---
@@ -131,20 +145,17 @@ fn point_fields_are_accessible() {
 #[test]
 fn radii_fields_are_accessible() {
     let config = GreekKeyCircleConfig::new(300.0, 30, 10, 3.0).unwrap();
-    // All seven Radii fields must be reachable from outside the crate
     let _ = config.radii.r_i;
     let _ = config.radii.r_a;
     let _ = config.radii.r_b;
     let _ = config.radii.r_c;
     let _ = config.radii.r_d;
     let _ = config.radii.r_e;
-    // Outer radius must equal the value passed to new()
     assert_eq!(config.radii.r_o, 300.0);
 }
 
 #[test]
 fn radii_type_is_nameable_at_crate_root() {
-    // Radii must be re-exported so consumers can name it without the config:: prefix
     let config = GreekKeyCircleConfig::new(300.0, 30, 10, 3.0).unwrap();
     let _r: greek_meander::Radii = config.radii;
     assert_eq!(_r.r_o, 300.0);
