@@ -66,5 +66,5 @@ Status: completed for the next release.
 
 ## Next: Further Shape Expansion
 
-- Research polygon borders for regular n-sided shapes.
+- Evaluate nested/concentric border support for rectangle and circle outputs.
 
