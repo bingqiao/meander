@@ -55,6 +55,22 @@
 //! # #[cfg(not(feature = "native"))] fn main() {}
 //! ```
 //!
+//! # Ellipse example
+//!
+//! ```
+//! # #[cfg(feature = "native")] fn main() {
+//! use greek_meander::{GreekKeyEllipseConfig, VisualOptions};
+//!
+//! let path = std::env::temp_dir().join("doctest_ellipse").to_string_lossy().into_owned();
+//! let config = GreekKeyEllipseConfig::new(200.0, 120.0, 28, 8, 3.0).unwrap();
+//! let visual = VisualOptions::default();
+//! greek_meander::ellipse::generate_pattern_svg(&config, &visual, &path).unwrap();
+//! # let _ = std::fs::remove_file(format!("{}.svg", path));
+//! # let _ = std::fs::remove_file(format!("{}.png", path));
+//! # }
+//! # #[cfg(not(feature = "native"))] fn main() {}
+//! ```
+//!
 //! # WASM / SVG-string example
 //!
 //! ```
@@ -74,9 +90,13 @@
 pub mod circle;
 pub(crate) mod common;
 pub mod config;
+pub mod ellipse;
 pub mod rect;
 #[cfg(feature = "wasm")]
 pub mod wasm;
 
 pub use common::Point;
-pub use config::{GreekKeyCircleConfig, GreekKeyRectConfig, Radii, VisualOptions};
+pub use config::{
+    EllipseRadii, GreekKeyCircleConfig, GreekKeyEllipseConfig, GreekKeyRectConfig, Radii,
+    VisualOptions,
+};

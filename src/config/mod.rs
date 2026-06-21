@@ -154,6 +154,15 @@ type CirclePatternPoints = (
     CirclePointSet,
 );
 
+type EllipsePointSet = [Point; 6];
+type EllipsePatternPoints = (
+    EllipsePointSet,
+    EllipsePointSet,
+    EllipsePointSet,
+    EllipsePointSet,
+    EllipsePointSet,
+);
+
 // Function to compute radii based on outer radius r_o and n
 pub(crate) fn get_radii_for_outer_radius(r_o: f64, n: i32) -> Result<Radii, &'static str> {
     // Check if n >= 19
@@ -214,6 +223,172 @@ pub(crate) fn calculate_circle_points(centre: Point, n: i32, p1: Point, r: f64) 
     }
 
     points
+}
+
+/// Ellipse semi-axis values for the five concentric rings used in the key pattern.
+#[derive(Debug)]
+pub struct EllipseRadii {
+    pub rx_a: f64,
+    pub ry_a: f64,
+    pub rx_b: f64,
+    pub ry_b: f64,
+    pub rx_c: f64,
+    pub ry_c: f64,
+    pub rx_d: f64,
+    pub ry_d: f64,
+    pub rx_e: f64,
+    pub ry_e: f64,
+    pub rx_i: f64,
+    pub ry_i: f64,
+}
+
+pub(crate) fn get_ellipse_radii(rx: f64, ry: f64, n: i32) -> Result<EllipseRadii, &'static str> {
+    let r = get_radii_for_outer_radius(1.0, n)?;
+    Ok(EllipseRadii {
+        rx_a: rx * r.r_a,
+        ry_a: ry * r.r_a,
+        rx_b: rx * r.r_b,
+        ry_b: ry * r.r_b,
+        rx_c: rx * r.r_c,
+        ry_c: ry * r.r_c,
+        rx_d: rx * r.r_d,
+        ry_d: ry * r.r_d,
+        rx_e: rx * r.r_e,
+        ry_e: ry * r.r_e,
+        rx_i: rx * r.r_i,
+        ry_i: ry * r.r_i,
+    })
+}
+
+pub(crate) fn calculate_ellipse_points(
+    centre: Point,
+    n: i32,
+    p1: Point,
+    rx: f64,
+    ry: f64,
+) -> EllipsePointSet {
+    let theta1 = ((p1.y - centre.y) / ry).atan2((p1.x - centre.x) / rx);
+    let theta = (2.0 * PI) / (5.0 * n as f64);
+    let mut points = [
+        Point { x: p1.x, y: p1.y },
+        Point { x: 0.0, y: 0.0 },
+        Point { x: 0.0, y: 0.0 },
+        Point { x: 0.0, y: 0.0 },
+        Point { x: 0.0, y: 0.0 },
+        Point { x: 0.0, y: 0.0 },
+    ];
+    for (i, point) in points.iter_mut().enumerate().skip(1) {
+        let angle = theta1 + (i as f64) * theta;
+        *point = Point {
+            x: centre.x + rx * angle.cos(),
+            y: centre.y + ry * angle.sin(),
+        };
+    }
+    points
+}
+
+/// Configuration for an ellipse Greek Key border pattern.
+#[derive(Debug)]
+pub struct GreekKeyEllipseConfig {
+    pub rx: f64,
+    pub ry: f64,
+    pub pattern_count: i32,
+    pub border_margin: i32,
+    pub ellipse_radii: EllipseRadii,
+    pub stroke_width: f32,
+}
+
+impl GreekKeyEllipseConfig {
+    /// Creates a new ellipse config.
+    ///
+    /// Returns an error if `rx` or `ry` is not a positive finite number, `pattern_count` < 4,
+    /// `border_margin` < 0, or `stroke_width` is not a positive finite number.
+    pub fn new(
+        rx: f64,
+        ry: f64,
+        pattern_count: i32,
+        border_margin: i32,
+        stroke_width: f32,
+    ) -> Result<Self, Box<dyn std::error::Error>> {
+        if rx <= 0.0 || !rx.is_finite() {
+            return Err("--rx must be a positive finite number".into());
+        }
+        if ry <= 0.0 || !ry.is_finite() {
+            return Err("--ry must be a positive finite number".into());
+        }
+        if pattern_count < 4 {
+            return Err("--pattern-count must be at least 4".into());
+        }
+        if border_margin < 0 {
+            return Err("--border-margin must be non-negative".into());
+        }
+        if stroke_width <= 0.0 || !stroke_width.is_finite() {
+            return Err("--stroke-width must be a positive finite number".into());
+        }
+        let ellipse_radii = get_ellipse_radii(rx, ry, PATTERN_UNIT_SIZE * pattern_count)?;
+        Ok(Self {
+            rx,
+            ry,
+            pattern_count,
+            border_margin,
+            ellipse_radii,
+            stroke_width,
+        })
+    }
+
+    pub(crate) fn get_canvas_size(&self) -> (f64, f64) {
+        let width =
+            2.0 * self.rx + (2 * self.border_margin) as f64 + (2.0 * self.stroke_width) as f64;
+        let height =
+            2.0 * self.ry + (2 * self.border_margin) as f64 + (2.0 * self.stroke_width) as f64;
+        (width, height)
+    }
+
+    pub(crate) fn get_centre(&self) -> Point {
+        Point {
+            x: self.border_margin as f64 + self.rx + self.stroke_width as f64,
+            y: self.border_margin as f64 + self.ry + self.stroke_width as f64,
+        }
+    }
+
+    pub(crate) fn get_coords_for_patterns(&self) -> EllipsePatternPoints {
+        let centre = self.get_centre();
+        let n = self.pattern_count;
+        let er = &self.ellipse_radii;
+        let start = |_rx_r: f64, ry_r: f64| Point {
+            x: centre.x,
+            y: centre.y - ry_r,
+        };
+        let points_a =
+            calculate_ellipse_points(centre, n, start(er.rx_a, er.ry_a), er.rx_a, er.ry_a);
+        let points_b =
+            calculate_ellipse_points(centre, n, start(er.rx_b, er.ry_b), er.rx_b, er.ry_b);
+        let points_c =
+            calculate_ellipse_points(centre, n, start(er.rx_c, er.ry_c), er.rx_c, er.ry_c);
+        let points_d =
+            calculate_ellipse_points(centre, n, start(er.rx_d, er.ry_d), er.rx_d, er.ry_d);
+        let points_e =
+            calculate_ellipse_points(centre, n, start(er.rx_e, er.ry_e), er.rx_e, er.ry_e);
+        (points_a, points_b, points_c, points_d, points_e)
+    }
+
+    pub(crate) fn get_coords_for_patterns_by_p0(
+        &self,
+        p_a0: Point,
+        p_b0: Point,
+        p_c0: Point,
+        p_d0: Point,
+        p_e0: Point,
+    ) -> EllipsePatternPoints {
+        let centre = self.get_centre();
+        let er = &self.ellipse_radii;
+        let points_a = calculate_ellipse_points(centre, self.pattern_count, p_a0, er.rx_a, er.ry_a);
+        let points_b = calculate_ellipse_points(centre, self.pattern_count, p_b0, er.rx_b, er.ry_b);
+        let points_c = calculate_ellipse_points(centre, self.pattern_count, p_c0, er.rx_c, er.ry_c);
+        let points_d = calculate_ellipse_points(centre, self.pattern_count, p_d0, er.rx_d, er.ry_d);
+        let points_e = calculate_ellipse_points(centre, self.pattern_count, p_e0, er.rx_e, er.ry_e);
+        (points_a, points_b, points_c, points_d, points_e)
+    }
 }
 
 impl GreekKeyCircleConfig {
@@ -431,6 +606,94 @@ mod tests {
     fn circle_nan_stroke_width_fails() {
         let e = GreekKeyCircleConfig::new(300.0, 30, 10, f32::NAN).unwrap_err();
         assert!(e.to_string().contains("--stroke-width"));
+    }
+
+    // --- GreekKeyEllipseConfig validation ---
+
+    #[test]
+    fn ellipse_valid() {
+        assert!(GreekKeyEllipseConfig::new(300.0, 200.0, 30, 10, 3.0).is_ok());
+    }
+
+    #[test]
+    fn ellipse_equal_axes_valid() {
+        assert!(GreekKeyEllipseConfig::new(200.0, 200.0, 20, 5, 2.0).is_ok());
+    }
+
+    #[test]
+    fn ellipse_minimum_pattern_count() {
+        assert!(GreekKeyEllipseConfig::new(300.0, 200.0, 4, 10, 3.0).is_ok());
+    }
+
+    #[test]
+    fn ellipse_pattern_count_below_minimum_fails() {
+        let e = GreekKeyEllipseConfig::new(300.0, 200.0, 3, 10, 3.0).unwrap_err();
+        assert!(e.to_string().contains("--pattern-count"));
+    }
+
+    #[test]
+    fn ellipse_zero_rx_fails() {
+        let e = GreekKeyEllipseConfig::new(0.0, 200.0, 30, 10, 3.0).unwrap_err();
+        assert!(e.to_string().contains("--rx"));
+    }
+
+    #[test]
+    fn ellipse_negative_rx_fails() {
+        let e = GreekKeyEllipseConfig::new(-50.0, 200.0, 30, 10, 3.0).unwrap_err();
+        assert!(e.to_string().contains("--rx"));
+    }
+
+    #[test]
+    fn ellipse_nan_rx_fails() {
+        let e = GreekKeyEllipseConfig::new(f64::NAN, 200.0, 30, 10, 3.0).unwrap_err();
+        assert!(e.to_string().contains("--rx"));
+    }
+
+    #[test]
+    fn ellipse_zero_ry_fails() {
+        let e = GreekKeyEllipseConfig::new(300.0, 0.0, 30, 10, 3.0).unwrap_err();
+        assert!(e.to_string().contains("--ry"));
+    }
+
+    #[test]
+    fn ellipse_negative_ry_fails() {
+        let e = GreekKeyEllipseConfig::new(300.0, -50.0, 30, 10, 3.0).unwrap_err();
+        assert!(e.to_string().contains("--ry"));
+    }
+
+    #[test]
+    fn ellipse_infinite_ry_fails() {
+        let e = GreekKeyEllipseConfig::new(300.0, f64::INFINITY, 30, 10, 3.0).unwrap_err();
+        assert!(e.to_string().contains("--ry"));
+    }
+
+    #[test]
+    fn ellipse_negative_margin_fails() {
+        let e = GreekKeyEllipseConfig::new(300.0, 200.0, 30, -1, 3.0).unwrap_err();
+        assert!(e.to_string().contains("--border-margin"));
+    }
+
+    #[test]
+    fn ellipse_zero_stroke_width_fails() {
+        let e = GreekKeyEllipseConfig::new(300.0, 200.0, 30, 10, 0.0).unwrap_err();
+        assert!(e.to_string().contains("--stroke-width"));
+    }
+
+    #[test]
+    fn ellipse_canvas_size() {
+        let config = GreekKeyEllipseConfig::new(300.0, 200.0, 30, 10, 3.0).unwrap();
+        let (w, h) = config.get_canvas_size();
+        assert!((w - (2.0 * 300.0 + 20.0 + 6.0)).abs() < 1e-6);
+        assert!((h - (2.0 * 200.0 + 20.0 + 6.0)).abs() < 1e-6);
+    }
+
+    #[test]
+    fn ellipse_radii_positive() {
+        let config = GreekKeyEllipseConfig::new(300.0, 200.0, 30, 10, 3.0).unwrap();
+        let er = &config.ellipse_radii;
+        assert!(er.rx_a > 0.0 && er.ry_a > 0.0);
+        assert!(er.rx_i > 0.0 && er.ry_i > 0.0);
+        assert!(er.rx_e < config.rx && er.ry_e < config.ry);
     }
 
     #[cfg(feature = "native")]

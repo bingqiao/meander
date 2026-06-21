@@ -8,8 +8,8 @@ use cli_output::OutputOptions;
 
 use greek_meander::{
     circle,
-    config::{GreekKeyCircleConfig, GreekKeyRectConfig, VisualOptions},
-    rect,
+    config::{GreekKeyCircleConfig, GreekKeyEllipseConfig, GreekKeyRectConfig, VisualOptions},
+    ellipse, rect,
 };
 
 const DEFAULT_STROKE_WIDTH: f32 = 6.0;
@@ -23,6 +23,9 @@ const DEFAULT_RECT_WIDTH: i32 = 16;
 const DEFAULT_RECT_HEIGHT: i32 = 9;
 const DEFAULT_CIRCLE_PATTERN_COUNT: i32 = 30;
 const DEFAULT_CIRCLE_RADIUS: f64 = 300.0;
+const DEFAULT_ELLIPSE_PATTERN_COUNT: i32 = 30;
+const DEFAULT_ELLIPSE_RX: f64 = 300.0;
+const DEFAULT_ELLIPSE_RY: f64 = 200.0;
 
 fn main() {
     let args = Args::parse();
@@ -76,45 +79,65 @@ fn main() {
 
     let rect_cfg = file_cfg.rect.unwrap_or_default();
     let circle_cfg = file_cfg.circle.unwrap_or_default();
+    let ellipse_cfg = file_cfg.ellipse.unwrap_or_default();
 
-    let result = match args.command {
-        Commands::Rect(rect_args) => {
-            let size = rect_args
-                .size
-                .or(rect_cfg.size)
-                .unwrap_or(DEFAULT_RECT_SIZE);
-            let width = rect_args
-                .width
-                .or(rect_cfg.width)
-                .unwrap_or(DEFAULT_RECT_WIDTH);
-            let height = rect_args
-                .height
-                .or(rect_cfg.height)
-                .unwrap_or(DEFAULT_RECT_HEIGHT);
-            GreekKeyRectConfig::new(size, width, height, border_margin, stroke_width).and_then(
-                |config| {
-                    let svg = rect::generate_svg_string(&config, &visual);
-                    cli_output::write_outputs(svg.as_bytes(), &file, &output_options)
-                },
-            )
-        }
-        Commands::Circle(circle_args) => {
-            let radius = circle_args
-                .radius
-                .or(circle_cfg.radius)
-                .unwrap_or(DEFAULT_CIRCLE_RADIUS);
-            let pattern_count = circle_args
-                .pattern_count
-                .or(circle_cfg.pattern_count)
-                .unwrap_or(DEFAULT_CIRCLE_PATTERN_COUNT);
-            GreekKeyCircleConfig::new(radius, pattern_count, border_margin, stroke_width).and_then(
-                |config| {
-                    let svg = circle::generate_svg_string(&config, &visual);
-                    cli_output::write_outputs(svg.as_bytes(), &file, &output_options)
-                },
-            )
-        }
-    };
+    let result =
+        match args.command {
+            Commands::Rect(rect_args) => {
+                let size = rect_args
+                    .size
+                    .or(rect_cfg.size)
+                    .unwrap_or(DEFAULT_RECT_SIZE);
+                let width = rect_args
+                    .width
+                    .or(rect_cfg.width)
+                    .unwrap_or(DEFAULT_RECT_WIDTH);
+                let height = rect_args
+                    .height
+                    .or(rect_cfg.height)
+                    .unwrap_or(DEFAULT_RECT_HEIGHT);
+                GreekKeyRectConfig::new(size, width, height, border_margin, stroke_width).and_then(
+                    |config| {
+                        let svg = rect::generate_svg_string(&config, &visual);
+                        cli_output::write_outputs(svg.as_bytes(), &file, &output_options)
+                    },
+                )
+            }
+            Commands::Circle(circle_args) => {
+                let radius = circle_args
+                    .radius
+                    .or(circle_cfg.radius)
+                    .unwrap_or(DEFAULT_CIRCLE_RADIUS);
+                let pattern_count = circle_args
+                    .pattern_count
+                    .or(circle_cfg.pattern_count)
+                    .unwrap_or(DEFAULT_CIRCLE_PATTERN_COUNT);
+                GreekKeyCircleConfig::new(radius, pattern_count, border_margin, stroke_width)
+                    .and_then(|config| {
+                        let svg = circle::generate_svg_string(&config, &visual);
+                        cli_output::write_outputs(svg.as_bytes(), &file, &output_options)
+                    })
+            }
+            Commands::Ellipse(ellipse_args) => {
+                let rx = ellipse_args
+                    .rx
+                    .or(ellipse_cfg.rx)
+                    .unwrap_or(DEFAULT_ELLIPSE_RX);
+                let ry = ellipse_args
+                    .ry
+                    .or(ellipse_cfg.ry)
+                    .unwrap_or(DEFAULT_ELLIPSE_RY);
+                let pattern_count = ellipse_args
+                    .pattern_count
+                    .or(ellipse_cfg.pattern_count)
+                    .unwrap_or(DEFAULT_ELLIPSE_PATTERN_COUNT);
+                GreekKeyEllipseConfig::new(rx, ry, pattern_count, border_margin, stroke_width)
+                    .and_then(|config| {
+                        let svg = ellipse::generate_svg_string(&config, &visual);
+                        cli_output::write_outputs(svg.as_bytes(), &file, &output_options)
+                    })
+            }
+        };
 
     if let Err(e) = result {
         eprintln!("Error: {}", e);

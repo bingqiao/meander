@@ -1,7 +1,7 @@
 use greek_meander::{
     circle,
-    config::{GreekKeyCircleConfig, GreekKeyRectConfig, VisualOptions},
-    rect,
+    config::{GreekKeyCircleConfig, GreekKeyEllipseConfig, GreekKeyRectConfig, VisualOptions},
+    ellipse, rect,
 };
 #[cfg(feature = "native")]
 use std::path::PathBuf;
@@ -354,6 +354,46 @@ radius = 100.0
 
 #[cfg(feature = "native")]
 #[test]
+fn config_file_sets_ellipse_params() {
+    let out = temp_path("gm_test_cfg_ellipse");
+    let _guard = TempFiles::for_base(&out);
+    let cfg = write_temp_config(
+        "gm_test_cfg_ellipse",
+        &format!(
+            r#"
+file = "{out}"
+[ellipse]
+pattern_count = 24
+rx = 140.0
+ry = 90.0
+"#
+        ),
+    );
+
+    let output = Command::new(env!("CARGO_BIN_EXE_greek-meander"))
+        .args(["--config", cfg.to_str().unwrap(), "--no-png", "ellipse"])
+        .output()
+        .unwrap();
+
+    let _ = std::fs::remove_file(&cfg);
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let svg = std::fs::read_to_string(format!("{out}.svg")).unwrap();
+    assert!(
+        svg.contains(r#"viewBox="0 0 294 194""#),
+        "ellipse semi-axes should come from the TOML file"
+    );
+    assert!(
+        svg.contains(r#"rx="140""#) && svg.contains(r#"ry="90""#),
+        "outer ellipse frame should use configured semi-axes"
+    );
+}
+
+#[cfg(feature = "native")]
+#[test]
 fn config_file_scale_changes_png_dimensions() {
     let normal_path = temp_path("gm_test_cfg_scale_normal");
     let scaled_path = temp_path("gm_test_cfg_scale_scaled");
@@ -587,6 +627,25 @@ fn circle_svg_string_is_valid_svg() {
     assert!(svg.contains("<path"), "svg string should contain path data");
 }
 
+#[test]
+fn ellipse_svg_string_is_valid_svg() {
+    let config = GreekKeyEllipseConfig::new(140.0, 90.0, 24, 5, 2.0).unwrap();
+    let svg = ellipse::generate_svg_string(&config, &VisualOptions::default());
+    assert!(
+        svg.contains("<svg"),
+        "svg string should contain an <svg> element"
+    );
+    assert!(
+        svg.contains("viewBox"),
+        "svg string should contain a viewBox attribute"
+    );
+    assert!(svg.contains("<path"), "svg string should contain path data");
+    assert!(
+        svg.contains("<ellipse"),
+        "ellipse output should contain frame ellipse elements"
+    );
+}
+
 // --- VisualOptions: SVG structure ---
 
 #[test]
@@ -683,6 +742,21 @@ fn circle_stroke_dash_appears_on_path_and_frames() {
     assert!(
         count >= 3,
         "stroke-dasharray should appear on pattern path and both circle frames, got {count}"
+    );
+}
+
+#[test]
+fn ellipse_stroke_dash_appears_on_path_and_frames() {
+    let config = GreekKeyEllipseConfig::new(140.0, 90.0, 24, 5, 2.0).unwrap();
+    let visual = VisualOptions {
+        stroke_dash: Some("8,4".to_string()),
+        ..Default::default()
+    };
+    let svg = ellipse::generate_svg_string(&config, &visual);
+    let count = svg.matches("stroke-dasharray").count();
+    assert!(
+        count >= 3,
+        "stroke-dasharray should appear on pattern path and both ellipse frames, got {count}"
     );
 }
 
@@ -860,4 +934,11 @@ fn radii_type_is_nameable_at_crate_root() {
     let config = GreekKeyCircleConfig::new(300.0, 30, 10, 3.0).unwrap();
     let _r: greek_meander::Radii = config.radii;
     assert_eq!(_r.r_o, 300.0);
+}
+
+#[test]
+fn ellipse_radii_type_is_nameable_at_crate_root() {
+    let config = GreekKeyEllipseConfig::new(300.0, 200.0, 30, 10, 3.0).unwrap();
+    let _r: greek_meander::EllipseRadii = config.ellipse_radii;
+    assert!((_r.rx_e / _r.ry_e - 1.5).abs() < f64::EPSILON);
 }

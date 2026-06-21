@@ -42,6 +42,7 @@ pub struct Args {
 pub enum Commands {
     Rect(RectArgs),
     Circle(CircleArgs),
+    Ellipse(EllipseArgs),
 }
 
 #[derive(Parser, Debug)]
@@ -60,4 +61,14 @@ pub struct CircleArgs {
     pub pattern_count: Option<i32>,
     #[arg(long, help = "Outer radius in pixels [default: 300]")]
     pub radius: Option<f64>,
+}
+
+#[derive(Parser, Debug)]
+pub struct EllipseArgs {
+    #[arg(long, help = "Number of patterns around the ellipse [default: 30]")]
+    pub pattern_count: Option<i32>,
+    #[arg(long, help = "Horizontal outer semi-axis in pixels [default: 300]")]
+    pub rx: Option<f64>,
+    #[arg(long, help = "Vertical outer semi-axis in pixels [default: 200]")]
+    pub ry: Option<f64>,
 }

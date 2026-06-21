@@ -19,6 +19,7 @@ pub struct FileConfig {
     pub scale: Option<f32>,
     pub rect: Option<RectFileConfig>,
     pub circle: Option<CircleFileConfig>,
+    pub ellipse: Option<EllipseFileConfig>,
 }
 
 #[derive(Deserialize, Serialize, Default, Debug)]
@@ -32,6 +33,13 @@ pub struct RectFileConfig {
 pub struct CircleFileConfig {
     pub pattern_count: Option<i32>,
     pub radius: Option<f64>,
+}
+
+#[derive(Deserialize, Serialize, Default, Debug)]
+pub struct EllipseFileConfig {
+    pub pattern_count: Option<i32>,
+    pub rx: Option<f64>,
+    pub ry: Option<f64>,
 }
 
 pub fn load(path: &std::path::Path) -> Result<FileConfig, Box<dyn std::error::Error>> {
@@ -105,6 +113,22 @@ mod tests {
         let circle = cfg.circle.unwrap();
         assert_eq!(circle.pattern_count, Some(20));
         assert_eq!(circle.radius, Some(150.0));
+    }
+
+    #[test]
+    fn ellipse_section_parses() {
+        let cfg = parse(
+            r#"
+            [ellipse]
+            pattern_count = 24
+            rx = 250.0
+            ry = 150.0
+            "#,
+        );
+        let ellipse = cfg.ellipse.unwrap();
+        assert_eq!(ellipse.pattern_count, Some(24));
+        assert_eq!(ellipse.rx, Some(250.0));
+        assert_eq!(ellipse.ry, Some(150.0));
     }
 
     #[test]

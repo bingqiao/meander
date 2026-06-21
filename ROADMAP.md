@@ -53,9 +53,18 @@ Status: completed for the next release.
 - WASM exports accept the new options as optional trailing parameters.
 - Default output is unchanged when no new options are supplied.
 
-## Next: Shape Expansion
+### Shape Expansion
 
-Add new shape families while keeping the core geometry API stable.
+Status: completed for the next release.
 
-- Add ellipse borders with separate horizontal and vertical radii.
+- Added ellipse borders with separate `--rx` (horizontal) and `--ry` (vertical) semi-axes.
+- Added `greek-meander ellipse` subcommand with `--rx`, `--ry`, and `--pattern-count` flags.
+- All shared options (`--fill-color`, `--background-color`, `--stroke-dash`, `--config`, etc.) apply.
+- TOML config files support an `[ellipse]` section with `rx`, `ry`, and `pattern_count` fields.
+- `GreekKeyEllipseConfig` and `EllipseRadii` added to the public Rust API.
+- `ellipse_generate_svg` added to the WASM exports.
+
+## Next: Further Shape Expansion
+
+- Research polygon borders for regular n-sided shapes.
 

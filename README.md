@@ -4,7 +4,10 @@
 
 Create a frame of Greek Key (Meander) design in SVG and PNG format.
 
-This is a Rust crate for creating both rectangle and circle border designs of the Greek Key (Meander).
+This is a Rust crate for creating rectangle, circle, and ellipse border designs
+of the Greek Key (Meander).
+
+Try the browser demo: <https://bingqiao.github.io/meander/>
 
 ## Images
 
@@ -99,6 +102,30 @@ greek-meander --stroke-color "#7C3B2E" --file "my_circle_design" circle --radius
 
 This will generate `my_circle_design.svg` and `my_circle_design.png`.
 
+### Ellipse
+
+To generate an ellipse meander design, use the `ellipse` command:
+
+```bash
+greek-meander ellipse --rx <RX> --ry <RY> --pattern-count <PATTERN_COUNT>
+```
+
+**Options**
+
+| Option | Description | Default |
+|---|---|---|
+| `--rx` | The horizontal outer semi-axis of the ellipse | 300.0 |
+| `--ry` | The vertical outer semi-axis of the ellipse | 200.0 |
+| `--pattern-count` | The number of patterns around the ellipse | 30 |
+
+**Example**
+
+```bash
+greek-meander --stroke-color "#7C3B2E" --file "my_ellipse_design" ellipse --rx 200 --ry 120 --pattern-count 28
+```
+
+This will generate `my_ellipse_design.svg` and `my_ellipse_design.png`.
+
 ### Visual Styling
 
 Use `--fill-color`, `--background-color`, and `--stroke-dash` to style the
@@ -148,6 +175,7 @@ Use `--no-png` or `--no-svg` to generate only one file type:
 ```bash
 greek-meander --no-png rect
 greek-meander --no-svg circle
+greek-meander --no-png ellipse
 ```
 
 Use `--scale` to increase PNG resolution while preserving the SVG viewBox:
@@ -205,6 +233,25 @@ Run it with:
 greek-meander --config circle-design.toml circle
 ```
 
+Ellipse config:
+
+```toml
+file = "my_ellipse_design"
+stroke_width = 3.0
+stroke_color = "#7C3B2E"
+
+[ellipse]
+rx = 200.0
+ry = 120.0
+pattern_count = 28
+```
+
+Run it with:
+
+```bash
+greek-meander --config ellipse-design.toml ellipse
+```
+
 Output routing stays command-line only: use `--stdout`, `--no-svg`, and
 `--no-png` on the command line when selecting output for a specific run.
 
@@ -242,11 +289,17 @@ To build the browser WebAssembly package, disable native file output and enable
 the `wasm` feature:
 
 ```bash
-wasm-pack build --target web --no-default-features --features wasm
+wasm-pack build \
+  --target web \
+  --out-dir examples/wasm-browser/pkg \
+  --out-name greek_meander \
+  --no-default-features \
+  --features wasm
 ```
 
 This creates a `pkg/` directory with JavaScript bindings for
-`rect_generate_svg` and `circle_generate_svg`, which return SVG markup strings.
+`rect_generate_svg`, `circle_generate_svg`, and `ellipse_generate_svg`, which
+return SVG markup strings.
 
 To try the browser example:
 
@@ -259,6 +312,15 @@ Then visit:
 ```text
 http://localhost:8000/examples/wasm-browser/
 ```
+
+The repository includes a GitHub Pages workflow that builds this browser demo
+and publishes it at:
+
+```text
+https://bingqiao.github.io/meander/
+```
+
+Set Pages to deploy from GitHub Actions in the repository settings.
 
 ## License
 

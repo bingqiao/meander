@@ -1,6 +1,6 @@
 [package]
 name = "greek-meander"
-version = "0.1.5"
+version = "0.1.6"
 edition = "2024"
 description = "A Rust crate and WASM package for creating Greek Key (Meander) SVG patterns."
 license = "MIT"
@@ -21,6 +21,10 @@ required-features = ["native"]
 
 [[example]]
 name = "circle"
+required-features = ["native"]
+
+[[example]]
+name = "ellipse"
 required-features = ["native"]
 
 [features]
