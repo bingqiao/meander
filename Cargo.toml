@@ -1,6 +1,6 @@
 [package]
 name = "greek-meander"
-version = "0.1.5"
+version = "0.1.6"
 edition = "2024"
 description = "A Rust crate and WASM package for creating Greek Key (Meander) SVG patterns."
 license = "MIT"
@@ -23,9 +23,13 @@ required-features = ["native"]
 name = "circle"
 required-features = ["native"]
 
+[[example]]
+name = "ellipse"
+required-features = ["native"]
+
 [features]
 default = ["native"]
-native = ["dep:resvg", "dep:clap"]
+native = ["dep:resvg", "dep:clap", "dep:serde", "dep:toml"]
 wasm = ["dep:wasm-bindgen"]
 
 [dev-dependencies]
@@ -35,5 +39,7 @@ wasm-bindgen-test = "0.3"
 [dependencies]
 clap = { version = "4.5.46", features = ["derive"], optional = true }
 resvg = { version = "0.45.1", optional = true }
+serde = { version = "1", features = ["derive"], optional = true }
 svg = "0.18.0"
+toml = { version = "0.8", optional = true }
 wasm-bindgen = { version = "0.2", optional = true }

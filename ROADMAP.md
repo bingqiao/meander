@@ -1,43 +1,70 @@
 # Roadmap
 
-## Library API
+## Completed
 
-Expose `rect` and `circle` generation as a public Rust library via `lib.rs` so other crates can use greek-meander programmatically as a dependency, not just via CLI.
-
-Include a WebAssembly (WASM) target so the library can run in browser-based design tools.
+### Library API
 
 Status: completed in v0.1.5.
 
-## Output Control
+- Exposed rectangle and circle generation through the public Rust library API.
+- Added SVG string generation so other crates can use `greek-meander`
+  programmatically without going through the CLI.
+- Kept native file output available behind the default `native` feature.
 
-- `--no-png` / `--no-svg` flags to skip generating one of the two output files
-- `--scale <FACTOR>` to multiply the PNG pixel dimensions (e.g. `--scale 2` doubles the output resolution; currently 1:1 with the SVG viewBox)
-- Additional export formats: JPEG, PDF (useful for print and laser cutting)
-- `--stdout` to pipe SVG to stdout for integration with other tools
+### WebAssembly Support
 
-## Visual Options
+Status: completed in v0.1.5.
 
-- `--fill-color` to fill the interior of the pattern (currently always transparent)
-- `--background-color` to set a canvas background colour
-- `--direction cw|ccw` to select clockwise or counter-clockwise meander (the two classical chiralities)
-- `--stroke-dash <PATTERN>` for dashed stroke lines, adding aesthetic variety
-- `--theme <NAME>` for named colour presets (e.g. `gold`, `greek-blue`, `black`) so non-designers can get good results without specifying hex codes
-- Animated SVG via `--animate`: uses CSS animation to draw the meander path progressively — makes the output visually striking for web use
+- Added a WASM build path for browser-based use.
+- Exposed JavaScript-callable SVG generation functions for rectangle and circle
+  patterns.
+- Added a browser example showing generated SVG output.
 
-## New Shapes
+### Pipeline-Friendly Output
 
-- **Ellipse** — meander ring on an ellipse with separate `--rx` and `--ry` radii; natural extension of the circle command
-- **Polygon** — meander border on a regular n-sided polygon (hexagon, octagon, etc.); mathematically complex, requires research into path fitting along polygon edges
+Status: completed for the next release.
 
-## Nested Borders
+- Added `--stdout` so generated SVG can be piped to other tools.
+- Added `--no-svg` and `--no-png` for selective file output.
+- Added `--scale <FACTOR>` for higher-resolution PNG rasterization.
+- Kept the default behavior compatible: commands still write both SVG and PNG
+  unless output flags say otherwise.
 
-Support multiple concentric meander bands in a single output — e.g. an inner and outer ring on the circle pattern, or double borders on the rectangle. A common traditional use of the motif.
+### Config File Input
 
-## Config File Input
+Status: completed for the next release.
 
-Accept a TOML config file as an alternative to CLI flags, making it easy to save, share, and reproduce complex designs.
+- Added `--config <PATH>` for TOML config files.
+- Config files can set shared options and rectangle or circle defaults.
+- Explicit CLI flags override config file values.
+- Missing fields fall back to the same defaults as CLI-only usage.
+- Kept output routing flags (`--stdout`, `--no-svg`, `--no-png`) as run-specific
+  command-line choices.
 
-## Developer Experience
+### Visual Options
 
-- Shell completions for bash, zsh, fish, and PowerShell via `clap_complete` (low effort, high impact)
-- Improved error messages that reference CLI parameter names rather than internal variables (e.g. `"--pattern-count must be at least 4"` instead of `"n must be greater or equal to 19"`)
+Status: completed for the next release.
+
+- Added `--fill-color` to fill the pattern interior.
+- Added `--background-color` to set an SVG canvas background.
+- Added `--stroke-dash` for dashed SVG strokes (any `stroke-dasharray` value).
+- All three options are available as TOML config file fields.
+- Visual styling consolidated into `VisualOptions` in the public Rust API.
+- WASM exports accept the new options as optional trailing parameters.
+- Default output is unchanged when no new options are supplied.
+
+### Shape Expansion
+
+Status: completed for the next release.
+
+- Added ellipse borders with separate `--rx` (horizontal) and `--ry` (vertical) semi-axes.
+- Added `greek-meander ellipse` subcommand with `--rx`, `--ry`, and `--pattern-count` flags.
+- All shared options (`--fill-color`, `--background-color`, `--stroke-dash`, `--config`, etc.) apply.
+- TOML config files support an `[ellipse]` section with `rx`, `ry`, and `pattern_count` fields.
+- `GreekKeyEllipseConfig` and `EllipseRadii` added to the public Rust API.
+- `ellipse_generate_svg` added to the WASM exports.
+
+## Next: Further Shape Expansion
+
+- Research polygon borders for regular n-sided shapes.
+

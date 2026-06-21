@@ -1,6 +1,10 @@
 /target
+/examples/wasm-browser/pkg
 /temp
 /meander.png
 /meander.svg
 .DS_Store
 .claude/settings.local.json
+/AGENTS.md
+/docs-local
+/CLAUDE.md

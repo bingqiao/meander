@@ -1,12 +1,12 @@
 use svg::Document;
 use svg::node::element::path::Data;
-use svg::node::element::{Circle, Path as SvgPath, Rectangle};
+use svg::node::element::{Ellipse as SvgEllipse, Path as SvgPath, Rectangle};
 
 #[cfg(feature = "native")]
 use crate::common::save_and_convert_svg;
-use crate::config::{GreekKeyCircleConfig, VisualOptions};
+use crate::config::{GreekKeyEllipseConfig, VisualOptions};
 
-fn draw_greek_key_patterns(config: &GreekKeyCircleConfig) -> Data {
+fn draw_greek_key_patterns(config: &GreekKeyEllipseConfig) -> Data {
     let (mut points_a, mut points_b, mut points_c, mut points_d, mut points_e) =
         config.get_coords_for_patterns();
 
@@ -38,31 +38,33 @@ fn draw_greek_key_patterns(config: &GreekKeyCircleConfig) -> Data {
 }
 
 fn draw_frame(
-    x: f64,
-    y: f64,
-    r: f64,
+    cx: f64,
+    cy: f64,
+    rx: f64,
+    ry: f64,
     stroke_color: &str,
     stroke_width: f32,
     stroke_opacity: f32,
-) -> Circle {
-    Circle::new()
-        .set("cx", x)
-        .set("cy", y)
-        .set("r", r)
+) -> SvgEllipse {
+    SvgEllipse::new()
+        .set("cx", cx)
+        .set("cy", cy)
+        .set("rx", rx)
+        .set("ry", ry)
         .set("fill", "none")
         .set("stroke", stroke_color.to_string())
         .set("stroke-width", stroke_width)
         .set("stroke-opacity", stroke_opacity)
 }
 
-fn apply_dash(circle: Circle, dash: Option<&str>) -> Circle {
+fn apply_dash(ellipse: SvgEllipse, dash: Option<&str>) -> SvgEllipse {
     match dash {
-        Some(d) => circle.set("stroke-dasharray", d),
-        None => circle,
+        Some(d) => ellipse.set("stroke-dasharray", d),
+        None => ellipse,
     }
 }
 
-fn build_document(config: &GreekKeyCircleConfig, visual: &VisualOptions) -> Document {
+fn build_document(config: &GreekKeyEllipseConfig, visual: &VisualOptions) -> Document {
     let stroke_width = config.stroke_width;
     let stroke_color = visual.stroke_color.as_str();
     let stroke_opacity = visual.stroke_opacity;
@@ -93,11 +95,13 @@ fn build_document(config: &GreekKeyCircleConfig, visual: &VisualOptions) -> Docu
     document = document.add(path);
 
     let centre = config.get_centre();
+    let er = &config.ellipse_radii;
     document = document.add(apply_dash(
         draw_frame(
             centre.x,
             centre.y,
-            config.radii.r_i,
+            er.rx_i,
+            er.ry_i,
             stroke_color,
             stroke_width,
             stroke_opacity,
@@ -108,7 +112,8 @@ fn build_document(config: &GreekKeyCircleConfig, visual: &VisualOptions) -> Docu
         draw_frame(
             centre.x,
             centre.y,
-            config.radii.r_o,
+            config.rx,
+            config.ry,
             stroke_color,
             stroke_width,
             stroke_opacity,
@@ -119,23 +124,91 @@ fn build_document(config: &GreekKeyCircleConfig, visual: &VisualOptions) -> Docu
     document
 }
 
-/// Returns the circle Greek Key pattern as an SVG string.
+/// Returns the ellipse Greek Key pattern as an SVG string.
 ///
 /// Available on all targets including WASM. For file output, use
 /// [`generate_pattern_svg`] (requires the `native` feature).
-pub fn generate_svg_string(config: &GreekKeyCircleConfig, visual: &VisualOptions) -> String {
+pub fn generate_svg_string(config: &GreekKeyEllipseConfig, visual: &VisualOptions) -> String {
     build_document(config, visual).to_string()
 }
 
-/// Generates a circle Greek Key pattern and writes `<filename>.svg` and `<filename>.png`.
+/// Generates an ellipse Greek Key pattern and writes `<filename>.svg` and `<filename>.png`.
 ///
 /// Requires the `native` feature (enabled by default). For WASM targets, use
 /// [`generate_svg_string`] instead.
 #[cfg(feature = "native")]
 pub fn generate_pattern_svg(
-    config: &GreekKeyCircleConfig,
+    config: &GreekKeyEllipseConfig,
     visual: &VisualOptions,
     filename: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
     save_and_convert_svg(build_document(config, visual), filename)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn ellipse_svg_contains_svg_element() {
+        let config = GreekKeyEllipseConfig::new(300.0, 200.0, 30, 10, 3.0).unwrap();
+        let svg = generate_svg_string(&config, &VisualOptions::default());
+        assert!(svg.contains("<svg"));
+        assert!(svg.contains("<path"));
+    }
+
+    #[test]
+    fn ellipse_svg_contains_ellipse_frames() {
+        let config = GreekKeyEllipseConfig::new(300.0, 200.0, 30, 10, 3.0).unwrap();
+        let svg = generate_svg_string(&config, &VisualOptions::default());
+        assert!(svg.contains("<ellipse"));
+    }
+
+    #[test]
+    fn ellipse_svg_contains_stroke_color() {
+        let config = GreekKeyEllipseConfig::new(300.0, 200.0, 30, 10, 3.0).unwrap();
+        let svg = generate_svg_string(&config, &VisualOptions::default());
+        assert!(svg.contains("#AB8E0E"));
+    }
+
+    #[test]
+    fn ellipse_svg_contains_fill_color() {
+        let config = GreekKeyEllipseConfig::new(300.0, 200.0, 30, 10, 3.0).unwrap();
+        let visual = VisualOptions {
+            fill_color: Some("#FF0000".to_string()),
+            ..VisualOptions::default()
+        };
+        let svg = generate_svg_string(&config, &visual);
+        assert!(svg.contains("#FF0000"));
+    }
+
+    #[test]
+    fn ellipse_svg_contains_background() {
+        let config = GreekKeyEllipseConfig::new(300.0, 200.0, 30, 10, 3.0).unwrap();
+        let visual = VisualOptions {
+            background_color: Some("#001122".to_string()),
+            ..VisualOptions::default()
+        };
+        let svg = generate_svg_string(&config, &visual);
+        assert!(svg.contains("#001122"));
+        assert!(svg.contains("<rect"));
+    }
+
+    #[test]
+    fn ellipse_svg_contains_dash() {
+        let config = GreekKeyEllipseConfig::new(300.0, 200.0, 30, 10, 3.0).unwrap();
+        let visual = VisualOptions {
+            stroke_dash: Some("5,3".to_string()),
+            ..VisualOptions::default()
+        };
+        let svg = generate_svg_string(&config, &visual);
+        assert!(svg.contains("stroke-dasharray"));
+    }
+
+    #[test]
+    fn ellipse_equal_axes_produces_valid_svg() {
+        let config = GreekKeyEllipseConfig::new(200.0, 200.0, 20, 5, 2.0).unwrap();
+        let svg = generate_svg_string(&config, &VisualOptions::default());
+        assert!(svg.contains("<svg"));
+    }
 }
