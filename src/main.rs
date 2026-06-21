@@ -8,7 +8,7 @@ use cli_output::OutputOptions;
 
 use greek_meander::{
     circle,
-    config::{GreekKeyCircleConfig, GreekKeyRectConfig},
+    config::{GreekKeyCircleConfig, GreekKeyRectConfig, VisualOptions},
     rect,
 };
 
@@ -61,6 +61,11 @@ fn main() {
         .unwrap_or_else(|| DEFAULT_FILE.to_string());
     let scale = args.scale.or(file_cfg.scale).unwrap_or(DEFAULT_SCALE);
 
+    let mut visual = VisualOptions::new(stroke_color, stroke_opacity);
+    visual.fill_color = args.fill_color.or(file_cfg.fill_color);
+    visual.background_color = args.background_color.or(file_cfg.background_color);
+    visual.stroke_dash = args.stroke_dash.or(file_cfg.stroke_dash);
+
     let output_options = match OutputOptions::new(!args.no_svg, !args.no_png, args.stdout, scale) {
         Ok(options) => options,
         Err(e) => {
@@ -88,7 +93,7 @@ fn main() {
                 .unwrap_or(DEFAULT_RECT_HEIGHT);
             GreekKeyRectConfig::new(size, width, height, border_margin, stroke_width).and_then(
                 |config| {
-                    let svg = rect::generate_svg_string(&config, &stroke_color, stroke_opacity);
+                    let svg = rect::generate_svg_string(&config, &visual);
                     cli_output::write_outputs(svg.as_bytes(), &file, &output_options)
                 },
             )
@@ -104,7 +109,7 @@ fn main() {
                 .unwrap_or(DEFAULT_CIRCLE_PATTERN_COUNT);
             GreekKeyCircleConfig::new(radius, pattern_count, border_margin, stroke_width).and_then(
                 |config| {
-                    let svg = circle::generate_svg_string(&config, &stroke_color, stroke_opacity);
+                    let svg = circle::generate_svg_string(&config, &visual);
                     cli_output::write_outputs(svg.as_bytes(), &file, &output_options)
                 },
             )

@@ -1,6 +1,6 @@
 use greek_meander::{
     circle,
-    config::{GreekKeyCircleConfig, GreekKeyRectConfig},
+    config::{GreekKeyCircleConfig, GreekKeyRectConfig, VisualOptions},
     rect,
 };
 #[cfg(feature = "native")]
@@ -55,7 +55,7 @@ fn rect_creates_svg_and_png() {
     let config = GreekKeyRectConfig::new(10, 4, 4, 5, 2.0).unwrap();
     let path = temp_path("gm_test_rect");
     let _guard = TempFiles::for_base(&path);
-    rect::generate_pattern_svg(&config, "#000000", 1.0, &path).unwrap();
+    rect::generate_pattern_svg(&config, &VisualOptions::new("#000000", 1.0), &path).unwrap();
     assert!(PathBuf::from(format!("{}.svg", path)).exists());
     assert!(PathBuf::from(format!("{}.png", path)).exists());
 }
@@ -66,7 +66,7 @@ fn rect_svg_has_valid_content() {
     let config = GreekKeyRectConfig::new(10, 4, 4, 5, 2.0).unwrap();
     let path = temp_path("gm_test_rect_svg");
     let _guard = TempFiles::for_base(&path);
-    rect::generate_pattern_svg(&config, "#AB8E0E", 0.7, &path).unwrap();
+    rect::generate_pattern_svg(&config, &VisualOptions::default(), &path).unwrap();
     let content = std::fs::read_to_string(format!("{}.svg", path)).unwrap();
     assert!(
         content.contains("<svg"),
@@ -84,7 +84,7 @@ fn rect_png_has_valid_magic_bytes() {
     let config = GreekKeyRectConfig::new(10, 4, 4, 5, 2.0).unwrap();
     let path = temp_path("gm_test_rect_png");
     let _guard = TempFiles::for_base(&path);
-    rect::generate_pattern_svg(&config, "#AB8E0E", 0.7, &path).unwrap();
+    rect::generate_pattern_svg(&config, &VisualOptions::default(), &path).unwrap();
     let bytes = std::fs::read(format!("{}.png", path)).unwrap();
     assert!(
         bytes.starts_with(&PNG_MAGIC),
@@ -221,7 +221,7 @@ fn circle_creates_svg_and_png() {
     let config = GreekKeyCircleConfig::new(100.0, 10, 5, 2.0).unwrap();
     let path = temp_path("gm_test_circle");
     let _guard = TempFiles::for_base(&path);
-    circle::generate_pattern_svg(&config, "#000000", 1.0, &path).unwrap();
+    circle::generate_pattern_svg(&config, &VisualOptions::new("#000000", 1.0), &path).unwrap();
     assert!(PathBuf::from(format!("{}.svg", path)).exists());
     assert!(PathBuf::from(format!("{}.png", path)).exists());
 }
@@ -232,7 +232,7 @@ fn circle_svg_has_valid_content() {
     let config = GreekKeyCircleConfig::new(100.0, 10, 5, 2.0).unwrap();
     let path = temp_path("gm_test_circle_svg");
     let _guard = TempFiles::for_base(&path);
-    circle::generate_pattern_svg(&config, "#AB8E0E", 0.7, &path).unwrap();
+    circle::generate_pattern_svg(&config, &VisualOptions::default(), &path).unwrap();
     let content = std::fs::read_to_string(format!("{}.svg", path)).unwrap();
     assert!(
         content.contains("<svg"),
@@ -250,7 +250,7 @@ fn circle_png_has_valid_magic_bytes() {
     let config = GreekKeyCircleConfig::new(100.0, 10, 5, 2.0).unwrap();
     let path = temp_path("gm_test_circle_png");
     let _guard = TempFiles::for_base(&path);
-    circle::generate_pattern_svg(&config, "#AB8E0E", 0.7, &path).unwrap();
+    circle::generate_pattern_svg(&config, &VisualOptions::default(), &path).unwrap();
     let bytes = std::fs::read(format!("{}.png", path)).unwrap();
     assert!(
         bytes.starts_with(&PNG_MAGIC),
@@ -560,7 +560,7 @@ fn malformed_config_file_gives_error() {
 #[test]
 fn rect_svg_string_is_valid_svg() {
     let config = GreekKeyRectConfig::new(10, 4, 4, 5, 2.0).unwrap();
-    let svg = rect::generate_svg_string(&config, "#AB8E0E", 0.7);
+    let svg = rect::generate_svg_string(&config, &VisualOptions::default());
     assert!(
         svg.contains("<svg"),
         "svg string should contain an <svg> element"
@@ -575,7 +575,7 @@ fn rect_svg_string_is_valid_svg() {
 #[test]
 fn circle_svg_string_is_valid_svg() {
     let config = GreekKeyCircleConfig::new(100.0, 10, 5, 2.0).unwrap();
-    let svg = circle::generate_svg_string(&config, "#AB8E0E", 0.7);
+    let svg = circle::generate_svg_string(&config, &VisualOptions::default());
     assert!(
         svg.contains("<svg"),
         "svg string should contain an <svg> element"
@@ -585,6 +585,252 @@ fn circle_svg_string_is_valid_svg() {
         "svg string should contain a viewBox attribute"
     );
     assert!(svg.contains("<path"), "svg string should contain path data");
+}
+
+// --- VisualOptions: SVG structure ---
+
+#[test]
+fn default_output_has_no_fill_no_background_no_dash() {
+    let config = GreekKeyRectConfig::new(10, 4, 4, 5, 2.0).unwrap();
+    let svg = rect::generate_svg_string(&config, &VisualOptions::default());
+    assert!(
+        svg.contains(r#"fill="none""#),
+        "default fill should be none"
+    );
+    assert!(!svg.contains("stroke-dasharray"), "no dasharray by default");
+    assert!(!svg.contains("<rect"), "no background rect by default");
+}
+
+#[test]
+fn fill_color_appears_on_pattern_path() {
+    let config = GreekKeyRectConfig::new(10, 4, 4, 5, 2.0).unwrap();
+    let visual = VisualOptions {
+        fill_color: Some("#FF0000".to_string()),
+        ..Default::default()
+    };
+    let svg = rect::generate_svg_string(&config, &visual);
+    assert!(
+        svg.contains("fill=\"#FF0000\""),
+        "fill color should appear on the path element"
+    );
+}
+
+#[test]
+fn background_color_adds_rect_element() {
+    let config = GreekKeyRectConfig::new(10, 4, 4, 5, 2.0).unwrap();
+    let visual = VisualOptions {
+        background_color: Some("#000000".to_string()),
+        ..Default::default()
+    };
+    let svg = rect::generate_svg_string(&config, &visual);
+    assert!(
+        svg.contains("<rect"),
+        "background color should add a rect element"
+    );
+    assert!(
+        svg.contains("fill=\"#000000\""),
+        "background rect should have the specified fill color"
+    );
+}
+
+#[test]
+fn stroke_dash_appears_on_path_and_frames() {
+    let config = GreekKeyRectConfig::new(10, 4, 4, 5, 2.0).unwrap();
+    let visual = VisualOptions {
+        stroke_dash: Some("5,3".to_string()),
+        ..Default::default()
+    };
+    let svg = rect::generate_svg_string(&config, &visual);
+    let count = svg.matches("stroke-dasharray").count();
+    assert!(
+        count >= 3,
+        "stroke-dasharray should appear on pattern path and both frames, got {count}"
+    );
+}
+
+#[test]
+fn circle_fill_color_appears_on_pattern_path() {
+    let config = GreekKeyCircleConfig::new(100.0, 10, 5, 2.0).unwrap();
+    let visual = VisualOptions {
+        fill_color: Some("#00FF00".to_string()),
+        ..Default::default()
+    };
+    let svg = circle::generate_svg_string(&config, &visual);
+    assert!(svg.contains("fill=\"#00FF00\""));
+}
+
+#[test]
+fn circle_background_color_adds_rect_element() {
+    let config = GreekKeyCircleConfig::new(100.0, 10, 5, 2.0).unwrap();
+    let visual = VisualOptions {
+        background_color: Some("#111111".to_string()),
+        ..Default::default()
+    };
+    let svg = circle::generate_svg_string(&config, &visual);
+    assert!(svg.contains("<rect"));
+    assert!(svg.contains("fill=\"#111111\""));
+}
+
+#[test]
+fn circle_stroke_dash_appears_on_path_and_frames() {
+    let config = GreekKeyCircleConfig::new(100.0, 10, 5, 2.0).unwrap();
+    let visual = VisualOptions {
+        stroke_dash: Some("8,4".to_string()),
+        ..Default::default()
+    };
+    let svg = circle::generate_svg_string(&config, &visual);
+    let count = svg.matches("stroke-dasharray").count();
+    assert!(
+        count >= 3,
+        "stroke-dasharray should appear on pattern path and both circle frames, got {count}"
+    );
+}
+
+#[cfg(feature = "native")]
+#[test]
+fn cli_fill_color_appears_in_svg() {
+    let path = temp_path("gm_test_fill_color");
+    let _guard = TempFiles::for_base(&path);
+
+    let output = Command::new(env!("CARGO_BIN_EXE_greek-meander"))
+        .args([
+            "--fill-color",
+            "#FF0000",
+            "--no-png",
+            "--file",
+            &path,
+            "rect",
+            "--size",
+            "10",
+            "--width",
+            "4",
+            "--height",
+            "4",
+        ])
+        .output()
+        .unwrap();
+
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let svg = std::fs::read_to_string(format!("{path}.svg")).unwrap();
+    assert!(svg.contains("fill=\"#FF0000\""));
+}
+
+#[cfg(feature = "native")]
+#[test]
+fn cli_background_color_adds_rect_to_svg() {
+    let path = temp_path("gm_test_background_color");
+    let _guard = TempFiles::for_base(&path);
+
+    let output = Command::new(env!("CARGO_BIN_EXE_greek-meander"))
+        .args([
+            "--background-color",
+            "#000000",
+            "--no-png",
+            "--file",
+            &path,
+            "rect",
+            "--size",
+            "10",
+            "--width",
+            "4",
+            "--height",
+            "4",
+        ])
+        .output()
+        .unwrap();
+
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let svg = std::fs::read_to_string(format!("{path}.svg")).unwrap();
+    assert!(svg.contains("<rect"));
+    assert!(svg.contains("fill=\"#000000\""));
+}
+
+#[cfg(feature = "native")]
+#[test]
+fn cli_stroke_dash_appears_in_svg() {
+    let path = temp_path("gm_test_stroke_dash");
+    let _guard = TempFiles::for_base(&path);
+
+    let output = Command::new(env!("CARGO_BIN_EXE_greek-meander"))
+        .args([
+            "--stroke-dash",
+            "5,3",
+            "--no-png",
+            "--file",
+            &path,
+            "rect",
+            "--size",
+            "10",
+            "--width",
+            "4",
+            "--height",
+            "4",
+        ])
+        .output()
+        .unwrap();
+
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let svg = std::fs::read_to_string(format!("{path}.svg")).unwrap();
+    assert!(svg.contains("stroke-dasharray"));
+}
+
+#[cfg(feature = "native")]
+#[test]
+fn config_file_visual_options_apply() {
+    let out = temp_path("gm_test_cfg_visual");
+    let _guard = TempFiles::for_base(&out);
+    let cfg = write_temp_config(
+        "gm_test_cfg_visual",
+        &format!(
+            r##"
+file = "{out}"
+fill_color = "#AABBCC"
+background_color = "#112233"
+stroke_dash = "4,2"
+[rect]
+size = 10
+width = 4
+height = 4
+"##
+        ),
+    );
+
+    let output = Command::new(env!("CARGO_BIN_EXE_greek-meander"))
+        .args(["--config", cfg.to_str().unwrap(), "--no-png", "rect"])
+        .output()
+        .unwrap();
+
+    let _ = std::fs::remove_file(&cfg);
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let svg = std::fs::read_to_string(format!("{out}.svg")).unwrap();
+    assert!(
+        svg.contains("fill=\"#AABBCC\""),
+        "fill_color from config should appear in svg"
+    );
+    assert!(
+        svg.contains("<rect"),
+        "background_color from config should add a rect element"
+    );
+    assert!(
+        svg.contains("stroke-dasharray"),
+        "stroke_dash from config should appear in svg"
+    );
 }
 
 // --- public type surface ---

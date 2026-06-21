@@ -1,10 +1,10 @@
 use svg::Document;
 use svg::node::element::path::Data;
-use svg::node::element::{Circle, Path as SvgPath};
+use svg::node::element::{Circle, Path as SvgPath, Rectangle};
 
 #[cfg(feature = "native")]
 use crate::common::save_and_convert_svg;
-use crate::config::GreekKeyCircleConfig;
+use crate::config::{GreekKeyCircleConfig, VisualOptions};
 
 fn draw_greek_key_patterns(config: &GreekKeyCircleConfig) -> Data {
     let (mut points_a, mut points_b, mut points_c, mut points_d, mut points_e) =
@@ -55,41 +55,65 @@ fn draw_frame(
         .set("stroke-opacity", stroke_opacity)
 }
 
-fn build_document(
-    config: &GreekKeyCircleConfig,
-    stroke_color: &str,
-    stroke_opacity: f32,
-) -> Document {
+fn apply_dash(circle: Circle, dash: Option<&str>) -> Circle {
+    match dash {
+        Some(d) => circle.set("stroke-dasharray", d),
+        None => circle,
+    }
+}
+
+fn build_document(config: &GreekKeyCircleConfig, visual: &VisualOptions) -> Document {
     let stroke_width = config.stroke_width;
+    let stroke_color = visual.stroke_color.as_str();
+    let stroke_opacity = visual.stroke_opacity;
+    let dash = visual.stroke_dash.as_deref();
     let (width, height) = config.get_canvas_size();
     let mut document = Document::new().set("viewBox", (0, 0, width, height));
 
+    if let Some(bg) = &visual.background_color {
+        document = document.add(
+            Rectangle::new()
+                .set("width", width)
+                .set("height", height)
+                .set("fill", bg.as_str()),
+        );
+    }
+
     let path_data = draw_greek_key_patterns(config);
     let path = SvgPath::new()
-        .set("fill", "none")
-        .set("stroke", stroke_color.to_string())
+        .set("fill", visual.fill_color.as_deref().unwrap_or("none"))
+        .set("stroke", stroke_color)
         .set("stroke-width", stroke_width)
         .set("stroke-opacity", stroke_opacity)
         .set("d", path_data);
-
+    let path = match dash {
+        Some(d) => path.set("stroke-dasharray", d),
+        None => path,
+    };
     document = document.add(path);
 
     let centre = config.get_centre();
-    document = document.add(draw_frame(
-        centre.x,
-        centre.y,
-        config.radii.r_i,
-        stroke_color,
-        stroke_width,
-        stroke_opacity,
+    document = document.add(apply_dash(
+        draw_frame(
+            centre.x,
+            centre.y,
+            config.radii.r_i,
+            stroke_color,
+            stroke_width,
+            stroke_opacity,
+        ),
+        dash,
     ));
-    document = document.add(draw_frame(
-        centre.x,
-        centre.y,
-        config.radii.r_o,
-        stroke_color,
-        stroke_width,
-        stroke_opacity,
+    document = document.add(apply_dash(
+        draw_frame(
+            centre.x,
+            centre.y,
+            config.radii.r_o,
+            stroke_color,
+            stroke_width,
+            stroke_opacity,
+        ),
+        dash,
     ));
 
     document
@@ -99,12 +123,8 @@ fn build_document(
 ///
 /// Available on all targets including WASM. For file output, use
 /// [`generate_pattern_svg`] (requires the `native` feature).
-pub fn generate_svg_string(
-    config: &GreekKeyCircleConfig,
-    stroke_color: &str,
-    stroke_opacity: f32,
-) -> String {
-    build_document(config, stroke_color, stroke_opacity).to_string()
+pub fn generate_svg_string(config: &GreekKeyCircleConfig, visual: &VisualOptions) -> String {
+    build_document(config, visual).to_string()
 }
 
 /// Generates a circle Greek Key pattern and writes `<filename>.svg` and `<filename>.png`.
@@ -114,12 +134,8 @@ pub fn generate_svg_string(
 #[cfg(feature = "native")]
 pub fn generate_pattern_svg(
     config: &GreekKeyCircleConfig,
-    stroke_color: &str,
-    stroke_opacity: f32,
+    visual: &VisualOptions,
     filename: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    save_and_convert_svg(
-        build_document(config, stroke_color, stroke_opacity),
-        filename,
-    )
+    save_and_convert_svg(build_document(config, visual), filename)
 }

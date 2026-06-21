@@ -27,11 +27,12 @@
 //!
 //! ```
 //! # #[cfg(feature = "native")] fn main() {
-//! use greek_meander::GreekKeyRectConfig;
+//! use greek_meander::{GreekKeyRectConfig, VisualOptions};
 //!
 //! let path = std::env::temp_dir().join("doctest_rect").to_string_lossy().into_owned();
 //! let config = GreekKeyRectConfig::new(25, 16, 9, 10, 3.0).unwrap();
-//! greek_meander::rect::generate_pattern_svg(&config, "#AB8E0E", 0.7, &path).unwrap();
+//! let visual = VisualOptions::default();
+//! greek_meander::rect::generate_pattern_svg(&config, &visual, &path).unwrap();
 //! # let _ = std::fs::remove_file(format!("{}.svg", path));
 //! # let _ = std::fs::remove_file(format!("{}.png", path));
 //! # }
@@ -42,11 +43,12 @@
 //!
 //! ```
 //! # #[cfg(feature = "native")] fn main() {
-//! use greek_meander::GreekKeyCircleConfig;
+//! use greek_meander::{GreekKeyCircleConfig, VisualOptions};
 //!
 //! let path = std::env::temp_dir().join("doctest_circle").to_string_lossy().into_owned();
 //! let config = GreekKeyCircleConfig::new(300.0, 30, 10, 3.0).unwrap();
-//! greek_meander::circle::generate_pattern_svg(&config, "#AB8E0E", 0.7, &path).unwrap();
+//! let visual = VisualOptions::default();
+//! greek_meander::circle::generate_pattern_svg(&config, &visual, &path).unwrap();
 //! # let _ = std::fs::remove_file(format!("{}.svg", path));
 //! # let _ = std::fs::remove_file(format!("{}.png", path));
 //! # }
@@ -56,10 +58,10 @@
 //! # WASM / SVG-string example
 //!
 //! ```
-//! use greek_meander::GreekKeyRectConfig;
+//! use greek_meander::{GreekKeyRectConfig, VisualOptions};
 //!
 //! let config = GreekKeyRectConfig::new(25, 16, 9, 10, 3.0).unwrap();
-//! let svg = greek_meander::rect::generate_svg_string(&config, "#AB8E0E", 0.7);
+//! let svg = greek_meander::rect::generate_svg_string(&config, &VisualOptions::default());
 //! assert!(svg.contains("<svg"));
 //! ```
 //!
@@ -77,4 +79,4 @@ pub mod rect;
 pub mod wasm;
 
 pub use common::Point;
-pub use config::{GreekKeyCircleConfig, GreekKeyRectConfig, Radii};
+pub use config::{GreekKeyCircleConfig, GreekKeyRectConfig, Radii, VisualOptions};

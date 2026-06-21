@@ -10,13 +10,21 @@ This is a Rust crate for creating both rectangle and circle border designs of th
 
 Here are some examples of the images that can be generated:
 
-**Rectangle**
+**Plain Rectangle**
 
 <img src="https://raw.githubusercontent.com/bingqiao/meander/refs/heads/master/images/meander_rect.png" width="700">
 
-**Circle**
+**Plain Circle**
 
 <img src="https://raw.githubusercontent.com/bingqiao/meander/refs/heads/master/images/meander_circle.png" width="700">
+
+**Styled Rectangle**
+
+<img src="https://raw.githubusercontent.com/bingqiao/meander/refs/heads/master/images/meander_rect_styled.png" width="700">
+
+**Styled Circle**
+
+<img src="https://raw.githubusercontent.com/bingqiao/meander/refs/heads/master/images/meander_circle_styled.png" width="700">
 
 ## Install
 
@@ -34,6 +42,9 @@ cargo install greek-meander
 | `--stroke-width` | The width of the stroke | 6.0 |
 | `--stroke-color` | The color of the stroke | "#AB8E0E" |
 | `--stroke-opacity` | The opacity of the stroke | 0.7 |
+| `--fill-color` | Fill color for the pattern interior | none (transparent) |
+| `--background-color` | Background color for the SVG canvas | none (transparent) |
+| `--stroke-dash` | SVG `stroke-dasharray` value, e.g. `"5,3"` | none (solid) |
 | `--border-margin` | The margin of the border | 1 |
 | `--file` | The base name of the output file | "meander" |
 | `--stdout` | Write generated SVG markup to stdout | false |
@@ -60,7 +71,7 @@ greek-meander rect --size <SIZE> --width <WIDTH> --height <HEIGHT>
 **Example**
 
 ```bash
-greek-meander --stroke-color "blue" --file "my_design" rect --size 12 --width 22 --height 14
+greek-meander --stroke-color "#1F5B73" --file "my_design" rect --size 12 --width 22 --height 14
 ```
 
 This will generate `my_design.svg` and `my_design.png`.
@@ -83,10 +94,44 @@ greek-meander circle --radius <RADIUS> --pattern-count <PATTERN_COUNT>
 **Example**
 
 ```bash
-greek-meander --stroke-color "red" --file "my_circle_design" circle --radius 120 --pattern-count 24
+greek-meander --stroke-color "#7C3B2E" --file "my_circle_design" circle --radius 120 --pattern-count 24
 ```
 
 This will generate `my_circle_design.svg` and `my_circle_design.png`.
+
+### Visual Styling
+
+Use `--fill-color`, `--background-color`, and `--stroke-dash` to style the
+generated SVG without changing the geometry:
+
+```bash
+greek-meander \
+  --stroke-color "#1F5B73" \
+  --stroke-opacity 0.9 \
+  --stroke-width 3 \
+  --fill-color "#DCEFF4" \
+  --background-color "#182026" \
+  --stroke-dash "10,5" \
+  --file "styled_rect" \
+  rect --size 14 --width 16 --height 9
+```
+
+The same visual options are available from Rust through `VisualOptions`:
+
+```rust
+use greek_meander::{GreekKeyRectConfig, VisualOptions, rect};
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let config = GreekKeyRectConfig::new(14, 16, 9, 8, 3.0)?;
+    let mut visual = VisualOptions::new("#1F5B73", 0.9);
+    visual.fill_color = Some("#DCEFF4".to_string());
+    visual.background_color = Some("#182026".to_string());
+    visual.stroke_dash = Some("10,5".to_string());
+
+    rect::generate_pattern_svg(&config, &visual, "styled_rect")?;
+    Ok(())
+}
+```
 
 ### Output Control
 
@@ -124,6 +169,9 @@ file = "my_design"
 stroke_width = 3.0
 stroke_color = "#AB8E0E"
 stroke_opacity = 0.7
+fill_color = "#FFEECC"        # optional: fill the pattern interior
+background_color = "#1A1A1A"  # optional: canvas background
+stroke_dash = "5,3"           # optional: dashed strokes
 border_margin = 1
 scale = 1.0
 
@@ -177,7 +225,7 @@ cargo run -- <GENERAL_OPTIONS> <COMMAND> <OPTIONS>
 For example:
 
 ```bash
-cargo run -- --stroke-color "blue" --file "my_design" rect --size 12 --width 22 --height 14
+cargo run -- --stroke-color "#1F5B73" --file "my_design" rect --size 12 --width 22 --height 14
 ```
 
 This will generate `my_design.svg` and `my_design.png`.

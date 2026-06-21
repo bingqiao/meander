@@ -1,10 +1,10 @@
 use svg::Document;
-use svg::node::element::Path as SvgPath;
 use svg::node::element::path::Data;
+use svg::node::element::{Path as SvgPath, Rectangle};
 
 #[cfg(feature = "native")]
 use crate::common::save_and_convert_svg;
-use crate::config::GreekKeyRectConfig;
+use crate::config::{GreekKeyRectConfig, VisualOptions};
 
 fn draw_horizontal_unit(data: Data, key_unit_length: i32) -> Data {
     data.line_by((0, -4 * key_unit_length))
@@ -117,45 +117,68 @@ fn draw_greek_key_patterns(config: &GreekKeyRectConfig) -> Data {
     data.close()
 }
 
-fn build_document(
-    config: &GreekKeyRectConfig,
-    stroke_color: &str,
-    stroke_opacity: f32,
-) -> Document {
+fn apply_dash(path: SvgPath, dash: Option<&str>) -> SvgPath {
+    match dash {
+        Some(d) => path.set("stroke-dasharray", d),
+        None => path,
+    }
+}
+
+fn build_document(config: &GreekKeyRectConfig, visual: &VisualOptions) -> Document {
     let stroke_width = config.stroke_width;
+    let stroke_color = visual.stroke_color.as_str();
+    let stroke_opacity = visual.stroke_opacity;
+    let dash = visual.stroke_dash.as_deref();
     let (width, height) = config.get_canvas_size();
     let mut document = Document::new().set("viewBox", (0, 0, width, height));
 
-    let path_data = draw_greek_key_patterns(config);
-    let path = SvgPath::new()
-        .set("fill", "none")
-        .set("stroke", stroke_color.to_string())
-        .set("stroke-width", stroke_width)
-        .set("stroke-opacity", stroke_opacity)
-        .set("d", path_data);
+    if let Some(bg) = &visual.background_color {
+        document = document.add(
+            Rectangle::new()
+                .set("width", width)
+                .set("height", height)
+                .set("fill", bg.as_str()),
+        );
+    }
 
+    let path_data = draw_greek_key_patterns(config);
+    let path = apply_dash(
+        SvgPath::new()
+            .set("fill", visual.fill_color.as_deref().unwrap_or("none"))
+            .set("stroke", stroke_color)
+            .set("stroke-width", stroke_width)
+            .set("stroke-opacity", stroke_opacity)
+            .set("d", path_data),
+        dash,
+    );
     document = document.add(path);
 
     let (outer_x, outer_y, outer_width, outer_height) = config.get_outer_frame_size();
-    document = document.add(draw_frame(
-        outer_x,
-        outer_y,
-        outer_width,
-        outer_height,
-        stroke_color,
-        stroke_width,
-        stroke_opacity,
+    document = document.add(apply_dash(
+        draw_frame(
+            outer_x,
+            outer_y,
+            outer_width,
+            outer_height,
+            stroke_color,
+            stroke_width,
+            stroke_opacity,
+        ),
+        dash,
     ));
 
     let (inner_x, inner_y, inner_width, inner_height) = config.get_inner_frame_size();
-    document = document.add(draw_frame(
-        inner_x,
-        inner_y,
-        inner_width,
-        inner_height,
-        stroke_color,
-        stroke_width,
-        stroke_opacity,
+    document = document.add(apply_dash(
+        draw_frame(
+            inner_x,
+            inner_y,
+            inner_width,
+            inner_height,
+            stroke_color,
+            stroke_width,
+            stroke_opacity,
+        ),
+        dash,
     ));
 
     document
@@ -165,12 +188,8 @@ fn build_document(
 ///
 /// Available on all targets including WASM. For file output, use
 /// [`generate_pattern_svg`] (requires the `native` feature).
-pub fn generate_svg_string(
-    config: &GreekKeyRectConfig,
-    stroke_color: &str,
-    stroke_opacity: f32,
-) -> String {
-    build_document(config, stroke_color, stroke_opacity).to_string()
+pub fn generate_svg_string(config: &GreekKeyRectConfig, visual: &VisualOptions) -> String {
+    build_document(config, visual).to_string()
 }
 
 /// Generates a rectangle Greek Key pattern and writes `<filename>.svg` and `<filename>.png`.
@@ -180,12 +199,8 @@ pub fn generate_svg_string(
 #[cfg(feature = "native")]
 pub fn generate_pattern_svg(
     config: &GreekKeyRectConfig,
-    stroke_color: &str,
-    stroke_opacity: f32,
+    visual: &VisualOptions,
     filename: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    save_and_convert_svg(
-        build_document(config, stroke_color, stroke_opacity),
-        filename,
-    )
+    save_and_convert_svg(build_document(config, visual), filename)
 }

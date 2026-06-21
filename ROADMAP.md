@@ -41,28 +41,21 @@ Status: completed for the next release.
 - Kept output routing flags (`--stdout`, `--no-svg`, `--no-png`) as run-specific
   command-line choices.
 
-## Next: Visual Options
+### Visual Options
 
-Add more styling controls while keeping the core SVG generation usable from
-Rust, WASM, scripts, and asset pipelines.
+Status: completed for the next release.
 
-### User Interface
+- Added `--fill-color` to fill the pattern interior.
+- Added `--background-color` to set an SVG canvas background.
+- Added `--stroke-dash` for dashed SVG strokes (any `stroke-dasharray` value).
+- All three options are available as TOML config file fields.
+- Visual styling consolidated into `VisualOptions` in the public Rust API.
+- WASM exports accept the new options as optional trailing parameters.
+- Default output is unchanged when no new options are supplied.
 
-Add options such as:
+## Next: Shape Expansion
 
-- `--fill-color`: fill pattern interiors where applicable.
-- `--background-color`: set the SVG canvas background.
-- `--stroke-dash <PATTERN>`: emit dashed SVG strokes.
+Add new shape families while keeping the core geometry API stable.
 
-### Implementation Design
+- Add ellipse borders with separate horizontal and vertical radii.
 
-- Keep visual styling independent from native file I/O and PNG rasterization.
-- Preserve WASM compatibility for SVG string generation.
-- Prefer serializable config fields where options should be reusable across
-  asset pipelines.
-
-### Done Criteria
-
-- Existing default output remains unchanged unless new options are supplied.
-- README documents each new option and its config-file equivalent when present.
-- Tests cover SVG structure and interaction with stdout/selective output modes.

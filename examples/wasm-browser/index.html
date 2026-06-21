@@ -87,6 +87,27 @@
         padding-inline: 0;
       }
 
+      input[type="color"] {
+        min-height: 42px;
+        padding: 4px;
+      }
+
+      input:disabled {
+        opacity: 0.55;
+      }
+
+      .toggle-label {
+        grid-template-columns: auto 1fr;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .toggle-label input {
+        width: 18px;
+        height: 18px;
+        padding: 0;
+      }
+
       .output {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -162,6 +183,31 @@
           <span>Opacity <output id="opacity-value">0.9</output></span>
           <input id="opacity" type="range" min="0.45" max="1" value="0.9" step="0.05">
         </label>
+        <label class="toggle-label">
+          <input id="use-fill" type="checkbox">
+          Fill
+        </label>
+        <label>
+          Fill color
+          <input id="fill-color" type="color" value="#DCEFF4">
+        </label>
+        <label class="toggle-label">
+          <input id="use-background" type="checkbox">
+          Background
+        </label>
+        <label>
+          Background color
+          <input id="background-color" type="color" value="#182026">
+        </label>
+        <label>
+          Dash
+          <select id="stroke-dash">
+            <option value="">Solid</option>
+            <option value="10,5">Long dash</option>
+            <option value="5,3">Short dash</option>
+            <option value="2,4">Dotted</option>
+          </select>
+        </label>
         <label>
           <span>Rect cells <output id="rect-value">12 x 7</output></span>
           <input id="rect-width" type="range" min="8" max="18" value="12" step="1">
@@ -199,6 +245,11 @@
       const palette = document.querySelector("#palette");
       const stroke = document.querySelector("#stroke");
       const opacity = document.querySelector("#opacity");
+      const useFill = document.querySelector("#use-fill");
+      const fillColor = document.querySelector("#fill-color");
+      const useBackground = document.querySelector("#use-background");
+      const backgroundColor = document.querySelector("#background-color");
+      const strokeDash = document.querySelector("#stroke-dash");
       const rectWidth = document.querySelector("#rect-width");
       const circleCount = document.querySelector("#circle-count");
       const radius = document.querySelector("#radius");
@@ -212,6 +263,11 @@
         palette: "#0F5D7C,#B15E2B",
         stroke: "2.5",
         opacity: "0.9",
+        useFill: false,
+        fillColor: "#DCEFF4",
+        useBackground: false,
+        backgroundColor: "#182026",
+        strokeDash: "",
         rectWidth: "12",
         circleCount: "24",
         radius: "160",
@@ -229,6 +285,12 @@
         const height = Math.max(5, Math.round(width * 0.58));
         const count = Number.parseInt(circleCount.value, 10);
         const outerRadius = numberValue(radius);
+        const fill = useFill.checked ? fillColor.value : null;
+        const background = useBackground.checked ? backgroundColor.value : null;
+        const dash = strokeDash.value || null;
+
+        fillColor.disabled = !useFill.checked;
+        backgroundColor.disabled = !useBackground.checked;
 
         strokeValue.value = strokeWidth.toFixed(1);
         opacityValue.value = strokeOpacity.toFixed(2);
@@ -244,6 +306,9 @@
           strokeWidth,
           rectColor,
           strokeOpacity,
+          fill,
+          background,
+          dash,
         );
         circleOutput.innerHTML = circle_generate_svg(
           outerRadius,
@@ -252,6 +317,9 @@
           strokeWidth,
           circleColor,
           strokeOpacity,
+          fill,
+          background,
+          dash,
         );
         status.textContent = "Generated SVG in the browser via WebAssembly.";
       }
@@ -260,6 +328,11 @@
         palette.value = defaults.palette;
         stroke.value = defaults.stroke;
         opacity.value = defaults.opacity;
+        useFill.checked = defaults.useFill;
+        fillColor.value = defaults.fillColor;
+        useBackground.checked = defaults.useBackground;
+        backgroundColor.value = defaults.backgroundColor;
+        strokeDash.value = defaults.strokeDash;
         rectWidth.value = defaults.rectWidth;
         circleCount.value = defaults.circleCount;
         radius.value = defaults.radius;

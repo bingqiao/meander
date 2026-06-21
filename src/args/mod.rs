@@ -13,6 +13,15 @@ pub struct Args {
     pub stroke_color: Option<String>,
     #[arg(long, help = "Stroke opacity [default: 0.7]")]
     pub stroke_opacity: Option<f32>,
+    #[arg(long, help = "Fill color for pattern interior [default: none]")]
+    pub fill_color: Option<String>,
+    #[arg(long, help = "Background color for the SVG canvas [default: none]")]
+    pub background_color: Option<String>,
+    #[arg(
+        long,
+        help = "SVG stroke-dasharray value, e.g. \"5,3\" [default: solid]"
+    )]
+    pub stroke_dash: Option<String>,
     #[arg(long, help = "Border margin in pixels [default: 1]")]
     pub border_margin: Option<i32>,
     #[arg(long, help = "Base name of the output file [default: meander]")]

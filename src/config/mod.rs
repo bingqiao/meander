@@ -2,6 +2,40 @@ use std::f64::consts::PI;
 
 use crate::common::Point;
 
+/// Visual styling options for SVG pattern generation.
+///
+/// Usable on all targets including WASM; no native-only dependencies.
+#[cfg_attr(feature = "native", derive(serde::Deserialize, serde::Serialize))]
+#[derive(Debug, Clone)]
+pub struct VisualOptions {
+    pub stroke_color: String,
+    pub stroke_opacity: f32,
+    /// Fill color for the pattern interior. `None` leaves the interior transparent.
+    pub fill_color: Option<String>,
+    /// Background color for the SVG canvas. `None` omits the background element.
+    pub background_color: Option<String>,
+    /// SVG `stroke-dasharray` value (e.g. `"5,3"`). `None` produces solid strokes.
+    pub stroke_dash: Option<String>,
+}
+
+impl VisualOptions {
+    pub fn new(stroke_color: impl Into<String>, stroke_opacity: f32) -> Self {
+        Self {
+            stroke_color: stroke_color.into(),
+            stroke_opacity,
+            fill_color: None,
+            background_color: None,
+            stroke_dash: None,
+        }
+    }
+}
+
+impl Default for VisualOptions {
+    fn default() -> Self {
+        Self::new("#AB8E0E", 0.7)
+    }
+}
+
 /// Configuration for a rectangle Greek Key border pattern.
 #[derive(Debug)]
 pub struct GreekKeyRectConfig {
@@ -397,5 +431,26 @@ mod tests {
     fn circle_nan_stroke_width_fails() {
         let e = GreekKeyCircleConfig::new(300.0, 30, 10, f32::NAN).unwrap_err();
         assert!(e.to_string().contains("--stroke-width"));
+    }
+
+    #[cfg(feature = "native")]
+    #[test]
+    fn visual_options_round_trip_through_toml() {
+        let visual = VisualOptions {
+            stroke_color: "#123456".to_string(),
+            stroke_opacity: 0.5,
+            fill_color: Some("#AABBCC".to_string()),
+            background_color: Some("#001122".to_string()),
+            stroke_dash: Some("4,2".to_string()),
+        };
+
+        let toml = toml::to_string(&visual).unwrap();
+        let parsed: VisualOptions = toml::from_str(&toml).unwrap();
+
+        assert_eq!(parsed.stroke_color, visual.stroke_color);
+        assert_eq!(parsed.stroke_opacity, visual.stroke_opacity);
+        assert_eq!(parsed.fill_color, visual.fill_color);
+        assert_eq!(parsed.background_color, visual.background_color);
+        assert_eq!(parsed.stroke_dash, visual.stroke_dash);
     }
 }
