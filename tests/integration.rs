@@ -258,6 +258,303 @@ fn circle_png_has_valid_magic_bytes() {
     );
 }
 
+// --- --config file input ---
+
+#[cfg(feature = "native")]
+fn write_temp_config(name: &str, content: &str) -> std::path::PathBuf {
+    let path = std::env::temp_dir().join(format!(
+        "{}_{}_{}.toml",
+        name,
+        std::process::id(),
+        std::thread::current().name().unwrap_or("test")
+    ));
+    std::fs::write(&path, content).unwrap();
+    path
+}
+
+#[cfg(feature = "native")]
+#[test]
+fn config_file_sets_rect_params() {
+    let out = temp_path("gm_test_cfg_rect");
+    let _guard = TempFiles::for_base(&out);
+    let cfg = write_temp_config(
+        "gm_test_cfg_rect",
+        &format!(
+            r#"
+file = "{out}"
+stroke_width = 3.0
+[rect]
+size = 10
+width = 4
+height = 4
+"#
+        ),
+    );
+
+    let output = Command::new(env!("CARGO_BIN_EXE_greek-meander"))
+        .args(["--config", cfg.to_str().unwrap(), "--no-png", "rect"])
+        .output()
+        .unwrap();
+
+    let _ = std::fs::remove_file(&cfg);
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let svg = std::fs::read_to_string(format!("{out}.svg")).unwrap();
+    assert!(
+        svg.contains(r#"viewBox="0 0 228 228""#),
+        "rect config dimensions should come from the TOML file"
+    );
+    assert!(
+        svg.contains(r#"stroke-width="3""#),
+        "shared config fields should apply to generated SVG"
+    );
+}
+
+#[cfg(feature = "native")]
+#[test]
+fn config_file_sets_circle_params() {
+    let out = temp_path("gm_test_cfg_circle");
+    let _guard = TempFiles::for_base(&out);
+    let cfg = write_temp_config(
+        "gm_test_cfg_circle",
+        &format!(
+            r#"
+file = "{out}"
+[circle]
+pattern_count = 10
+radius = 100.0
+"#
+        ),
+    );
+
+    let output = Command::new(env!("CARGO_BIN_EXE_greek-meander"))
+        .args(["--config", cfg.to_str().unwrap(), "--no-png", "circle"])
+        .output()
+        .unwrap();
+
+    let _ = std::fs::remove_file(&cfg);
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let svg = std::fs::read_to_string(format!("{out}.svg")).unwrap();
+    assert!(
+        svg.contains(r#"viewBox="0 0 214 214""#),
+        "circle radius should come from the TOML file"
+    );
+    assert!(
+        svg.contains(r#"r="100""#),
+        "outer circle radius should come from the TOML file"
+    );
+}
+
+#[cfg(feature = "native")]
+#[test]
+fn config_file_scale_changes_png_dimensions() {
+    let normal_path = temp_path("gm_test_cfg_scale_normal");
+    let scaled_path = temp_path("gm_test_cfg_scale_scaled");
+    let _normal_guard = TempFiles::for_base(&normal_path);
+    let _scaled_guard = TempFiles::for_base(&scaled_path);
+    let cfg = write_temp_config(
+        "gm_test_cfg_scale",
+        &format!(
+            r#"
+file = "{scaled_path}"
+scale = 2.0
+[rect]
+size = 10
+width = 4
+height = 4
+"#
+        ),
+    );
+
+    let normal_output = Command::new(env!("CARGO_BIN_EXE_greek-meander"))
+        .args([
+            "--no-svg",
+            "--file",
+            &normal_path,
+            "rect",
+            "--size",
+            "10",
+            "--width",
+            "4",
+            "--height",
+            "4",
+        ])
+        .output()
+        .unwrap();
+    let scaled_output = Command::new(env!("CARGO_BIN_EXE_greek-meander"))
+        .args(["--config", cfg.to_str().unwrap(), "--no-svg", "rect"])
+        .output()
+        .unwrap();
+
+    let _ = std::fs::remove_file(&cfg);
+    assert!(
+        normal_output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&normal_output.stderr)
+    );
+    assert!(
+        scaled_output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&scaled_output.stderr)
+    );
+
+    let normal = png_dimensions(&format!("{}.png", normal_path));
+    let scaled = png_dimensions(&format!("{}.png", scaled_path));
+    assert_eq!(scaled, (normal.0 * 2, normal.1 * 2));
+}
+
+#[cfg(feature = "native")]
+#[test]
+fn cli_flag_overrides_config_file() {
+    let cfg_out = temp_path("gm_test_override_cfg");
+    let cli_out = temp_path("gm_test_override_cli");
+    let _cfg_guard = TempFiles::for_base(&cfg_out);
+    let _cli_guard = TempFiles::for_base(&cli_out);
+
+    let cfg = write_temp_config(
+        "gm_test_override",
+        &format!(
+            r#"
+file = "{cfg_out}"
+stroke_width = 2.0
+[rect]
+size = 10
+width = 4
+height = 4
+"#
+        ),
+    );
+
+    // CLI --file overrides config file's file setting
+    let output = Command::new(env!("CARGO_BIN_EXE_greek-meander"))
+        .args([
+            "--config",
+            cfg.to_str().unwrap(),
+            "--file",
+            &cli_out,
+            "--stroke-width",
+            "4",
+            "--no-png",
+            "rect",
+            "--size",
+            "20",
+        ])
+        .output()
+        .unwrap();
+
+    let _ = std::fs::remove_file(&cfg);
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(
+        !PathBuf::from(format!("{cfg_out}.svg")).exists(),
+        "config file path should not be written"
+    );
+    let svg = std::fs::read_to_string(format!("{cli_out}.svg")).unwrap();
+    assert!(
+        svg.contains(r#"viewBox="0 0 450 450""#),
+        "CLI shape flags should override shape values from the config file"
+    );
+    assert!(
+        svg.contains(r#"stroke-width="4""#),
+        "CLI shared flags should override shared values from the config file"
+    );
+}
+
+#[cfg(feature = "native")]
+#[test]
+fn invalid_config_value_gives_validation_error() {
+    let cfg = write_temp_config(
+        "gm_test_invalid_value_cfg",
+        r#"
+[rect]
+width = 2
+"#,
+    );
+    let output = Command::new(env!("CARGO_BIN_EXE_greek-meander"))
+        .args(["--config", cfg.to_str().unwrap(), "--no-png", "rect"])
+        .output()
+        .unwrap();
+
+    let _ = std::fs::remove_file(&cfg);
+    assert!(!output.status.success());
+    let stderr = String::from_utf8(output.stderr).unwrap();
+    assert!(
+        stderr.contains("--width"),
+        "invalid config values should use the normal validation errors"
+    );
+}
+
+#[cfg(feature = "native")]
+#[test]
+fn config_file_missing_gives_error() {
+    let path = std::env::temp_dir().join(format!(
+        "nonexistent_gm_config_{}_{}.toml",
+        std::process::id(),
+        "missing"
+    ));
+    let output = Command::new(env!("CARGO_BIN_EXE_greek-meander"))
+        .args(["--config", path.to_str().unwrap(), "rect"])
+        .output()
+        .unwrap();
+
+    assert!(!output.status.success());
+    let stderr = String::from_utf8(output.stderr).unwrap();
+    assert!(stderr.contains("Error"), "should report an error");
+}
+
+#[cfg(feature = "native")]
+#[test]
+fn config_file_with_unknown_field_is_accepted() {
+    // Unknown fields are silently ignored for forward compatibility: a config
+    // written for a newer binary must not break on an older one.
+    let out = temp_path("gm_test_unknown_cfg");
+    let _guard = TempFiles::for_base(&out);
+    let cfg = write_temp_config(
+        "gm_test_bad_cfg",
+        &format!("unknown_key = 42\nfile = \"{out}\"\n"),
+    );
+    let output = Command::new(env!("CARGO_BIN_EXE_greek-meander"))
+        .args(["--config", cfg.to_str().unwrap(), "--no-png", "rect"])
+        .output()
+        .unwrap();
+
+    let _ = std::fs::remove_file(&cfg);
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(PathBuf::from(format!("{out}.svg")).exists());
+}
+
+#[cfg(feature = "native")]
+#[test]
+fn malformed_config_file_gives_error() {
+    let cfg = write_temp_config("gm_test_malformed_cfg", "stroke_width = [");
+    let output = Command::new(env!("CARGO_BIN_EXE_greek-meander"))
+        .args(["--config", cfg.to_str().unwrap(), "rect"])
+        .output()
+        .unwrap();
+
+    let _ = std::fs::remove_file(&cfg);
+    assert!(!output.status.success());
+    let stderr = String::from_utf8(output.stderr).unwrap();
+    assert!(
+        stderr.contains("invalid config file"),
+        "malformed TOML should be reported as a config parse error"
+    );
+}
+
 // --- generate_svg_string (always available, WASM-safe) ---
 
 #[test]
@@ -302,13 +599,14 @@ fn point_fields_are_accessible() {
 #[test]
 fn radii_fields_are_accessible() {
     let config = GreekKeyCircleConfig::new(300.0, 30, 10, 3.0).unwrap();
-    let _ = config.radii.r_i;
-    let _ = config.radii.r_a;
-    let _ = config.radii.r_b;
-    let _ = config.radii.r_c;
-    let _ = config.radii.r_d;
-    let _ = config.radii.r_e;
-    assert_eq!(config.radii.r_o, 300.0);
+    let radii = config.radii;
+    assert!(radii.r_i < radii.r_a);
+    assert!(radii.r_a < radii.r_b);
+    assert!(radii.r_b < radii.r_c);
+    assert!(radii.r_c < radii.r_d);
+    assert!(radii.r_d < radii.r_e);
+    assert!(radii.r_e < radii.r_o);
+    assert_eq!(radii.r_o, 300.0);
 }
 
 #[test]

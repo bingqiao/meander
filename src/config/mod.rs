@@ -111,6 +111,15 @@ pub struct Radii {
 
 static PATTERN_UNIT_SIZE: i32 = 5;
 
+type CirclePointSet = [Point; 6];
+type CirclePatternPoints = (
+    CirclePointSet,
+    CirclePointSet,
+    CirclePointSet,
+    CirclePointSet,
+    CirclePointSet,
+);
+
 // Function to compute radii based on outer radius r_o and n
 pub(crate) fn get_radii_for_outer_radius(r_o: f64, n: i32) -> Result<Radii, &'static str> {
     // Check if n >= 19
@@ -142,7 +151,7 @@ pub(crate) fn get_radii_for_outer_radius(r_o: f64, n: i32) -> Result<Radii, &'st
 }
 
 // Function to calculate 6 points on a circle centered at (x0, y0) with radius r
-pub(crate) fn calculate_circle_points(centre: Point, n: i32, p1: Point, r: f64) -> [Point; 6] {
+pub(crate) fn calculate_circle_points(centre: Point, n: i32, p1: Point, r: f64) -> CirclePointSet {
     // Calculate u = 2 * r * PI / (5 * n)
     let u = (2.0 * r * PI) / (5.0 * n as f64);
 
@@ -163,11 +172,11 @@ pub(crate) fn calculate_circle_points(centre: Point, n: i32, p1: Point, r: f64) 
     ];
 
     // Calculate the remaining 5 points
-    for i in 1..6 {
+    for (i, point) in points.iter_mut().enumerate().skip(1) {
         let angle = theta1 + (i as f64) * theta;
         let x = centre.x + r * angle.cos();
         let y = centre.y + r * angle.sin();
-        points[i] = Point { x, y };
+        *point = Point { x, y };
     }
 
     points
@@ -221,9 +230,7 @@ impl GreekKeyCircleConfig {
         }
     }
 
-    pub(crate) fn get_coords_for_patterns(
-        &self,
-    ) -> ([Point; 6], [Point; 6], [Point; 6], [Point; 6], [Point; 6]) {
+    pub(crate) fn get_coords_for_patterns(&self) -> CirclePatternPoints {
         let centre = self.get_centre();
         let n = self.pattern_count;
         let start = |r: f64| Point {
@@ -245,7 +252,7 @@ impl GreekKeyCircleConfig {
         p_c0: Point,
         p_d0: Point,
         p_e0: Point,
-    ) -> ([Point; 6], [Point; 6], [Point; 6], [Point; 6], [Point; 6]) {
+    ) -> CirclePatternPoints {
         let centre = self.get_centre();
         let points_a = calculate_circle_points(centre, self.pattern_count, p_a0, self.radii.r_a);
         let points_b = calculate_circle_points(centre, self.pattern_count, p_b0, self.radii.r_b);

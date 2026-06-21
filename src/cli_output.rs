@@ -47,8 +47,6 @@ pub(crate) fn write_outputs(
     filename: &str,
     options: &OutputOptions,
 ) -> Result<(), Box<dyn Error>> {
-    options.validate()?;
-
     if options.write_stdout {
         use std::io::Write;
         let stdout = std::io::stdout();

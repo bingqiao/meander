@@ -30,6 +30,7 @@ cargo install greek-meander
 
 | Option | Description | Default |
 |---|---|---|
+| `--config` | Load shared and shape-specific options from a TOML config file | none |
 | `--stroke-width` | The width of the stroke | 6.0 |
 | `--stroke-color` | The color of the stroke | "#AB8E0E" |
 | `--stroke-opacity` | The opacity of the stroke | 0.7 |
@@ -109,6 +110,55 @@ Use `--scale` to increase PNG resolution while preserving the SVG viewBox:
 ```bash
 greek-meander --scale 2 rect
 ```
+
+### Config Files
+
+Use `--config <PATH>` to load shared options and command-specific defaults from
+a TOML file. Explicit CLI flags override values from the config file, and any
+missing values fall back to the normal CLI defaults.
+
+Rectangle config:
+
+```toml
+file = "my_design"
+stroke_width = 3.0
+stroke_color = "#AB8E0E"
+stroke_opacity = 0.7
+border_margin = 1
+scale = 1.0
+
+[rect]
+size = 12
+width = 22
+height = 14
+```
+
+Run it with:
+
+```bash
+greek-meander --config rect-design.toml rect
+```
+
+Circle config:
+
+```toml
+file = "my_circle_design"
+stroke_width = 3.0
+stroke_color = "red"
+
+[circle]
+radius = 120.0
+pattern_count = 24
+```
+
+Run it with:
+
+```bash
+greek-meander --config circle-design.toml circle
+```
+
+Output routing stays command-line only: use `--stdout`, `--no-svg`, and
+`--no-png` on the command line when selecting output for a specific run.
 
 ## Build and Run
 

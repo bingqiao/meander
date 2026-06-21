@@ -1,26 +1,30 @@
+use std::path::PathBuf;
+
 use clap::{Parser, Subcommand};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 pub struct Args {
-    #[arg(long, default_value_t = 6.0)]
-    pub stroke_width: f32,
-    #[arg(long, default_value_t = String::from("#AB8E0E"))]
-    pub stroke_color: String,
-    #[arg(long, default_value_t = 0.7)]
-    pub stroke_opacity: f32,
-    #[arg(long, default_value_t = 1)]
-    pub border_margin: i32,
-    #[arg(long, default_value_t = String::from("meander"))]
-    pub file: String,
+    #[arg(long)]
+    pub config: Option<PathBuf>,
+    #[arg(long, help = "Stroke width [default: 6]")]
+    pub stroke_width: Option<f32>,
+    #[arg(long, help = "Stroke color [default: #AB8E0E]")]
+    pub stroke_color: Option<String>,
+    #[arg(long, help = "Stroke opacity [default: 0.7]")]
+    pub stroke_opacity: Option<f32>,
+    #[arg(long, help = "Border margin in pixels [default: 1]")]
+    pub border_margin: Option<i32>,
+    #[arg(long, help = "Base name of the output file [default: meander]")]
+    pub file: Option<String>,
     #[arg(long)]
     pub stdout: bool,
     #[arg(long)]
     pub no_svg: bool,
     #[arg(long)]
     pub no_png: bool,
-    #[arg(long, default_value_t = 1.0)]
-    pub scale: f32,
+    #[arg(long, help = "PNG scale factor [default: 1.0]")]
+    pub scale: Option<f32>,
     #[command(subcommand)]
     pub command: Commands,
 }
@@ -33,18 +37,18 @@ pub enum Commands {
 
 #[derive(Parser, Debug)]
 pub struct RectArgs {
-    #[arg(long, default_value_t = 25)]
-    pub size: i32,
-    #[arg(long, default_value_t = 16)]
-    pub width: i32,
-    #[arg(long, default_value_t = 9)]
-    pub height: i32,
+    #[arg(long, help = "Key unit length in pixels [default: 25]")]
+    pub size: Option<i32>,
+    #[arg(long, help = "Width in pattern units [default: 16]")]
+    pub width: Option<i32>,
+    #[arg(long, help = "Height in pattern units [default: 9]")]
+    pub height: Option<i32>,
 }
 
 #[derive(Parser, Debug)]
 pub struct CircleArgs {
-    #[arg(long, default_value_t = 30)]
-    pub pattern_count: i32,
-    #[arg(long, default_value_t = 300.)]
-    pub radius: f64,
+    #[arg(long, help = "Number of patterns around the circle [default: 30]")]
+    pub pattern_count: Option<i32>,
+    #[arg(long, help = "Outer radius in pixels [default: 300]")]
+    pub radius: Option<f64>,
 }

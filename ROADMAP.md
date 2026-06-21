@@ -30,42 +30,39 @@ Status: completed for the next release.
 - Kept the default behavior compatible: commands still write both SVG and PNG
   unless output flags say otherwise.
 
-## Next: Config File Input
+### Config File Input
 
-Add TOML config files so designs can be saved, shared, reviewed, and reproduced
-without long CLI commands.
+Status: completed for the next release.
+
+- Added `--config <PATH>` for TOML config files.
+- Config files can set shared options and rectangle or circle defaults.
+- Explicit CLI flags override config file values.
+- Missing fields fall back to the same defaults as CLI-only usage.
+- Kept output routing flags (`--stdout`, `--no-svg`, `--no-png`) as run-specific
+  command-line choices.
+
+## Next: Visual Options
+
+Add more styling controls while keeping the core SVG generation usable from
+Rust, WASM, scripts, and asset pipelines.
 
 ### User Interface
 
-Add a top-level CLI option:
+Add options such as:
 
-- `--config <PATH>`: load shared options, shape selection, and shape-specific
-  settings from a TOML file.
-
-CLI flags should continue to work without config files. When both are provided,
-explicit CLI flags should override values loaded from the config file.
-
-### Behavior
-
-- A config file should be able to describe either a rectangle or circle pattern.
-- Missing fields should fall back to the same defaults as the CLI.
-- Invalid config values should return errors that mention the relevant config
-  field and matching CLI option where possible.
-- Config loading should not change the existing Rust library API unless shared
-  config types make that cleaner.
+- `--fill-color`: fill pattern interiors where applicable.
+- `--background-color`: set the SVG canvas background.
+- `--stroke-dash <PATTERN>`: emit dashed SVG strokes.
 
 ### Implementation Design
 
-- Add a serializable CLI config model separate from the existing validated
-  geometry config structs.
-- Convert loaded config plus CLI overrides into `GreekKeyRectConfig` or
-  `GreekKeyCircleConfig` only after all defaults are resolved.
-- Keep config file parsing native-only for now.
-- Include at least one example config for each supported shape.
+- Keep visual styling independent from native file I/O and PNG rasterization.
+- Preserve WASM compatibility for SVG string generation.
+- Prefer serializable config fields where options should be reusable across
+  asset pipelines.
 
 ### Done Criteria
 
-- Existing CLI commands continue to work unchanged.
-- `README.md` documents the config format and override behavior.
-- Tests cover rectangle config, circle config, CLI override behavior, and invalid
-  config errors.
+- Existing default output remains unchanged unless new options are supplied.
+- README documents each new option and its config-file equivalent when present.
+- Tests cover SVG structure and interaction with stdout/selective output modes.
